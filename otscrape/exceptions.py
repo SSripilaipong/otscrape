@@ -1,0 +1,2 @@
+class UnexpectedStatusCode(Exception):
+    pass
