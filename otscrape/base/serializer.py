@@ -7,10 +7,10 @@ class SerializerMeta(type):
         attrs = {}
 
         for name, obj in dct.items():
-            if not getattr(obj, 'is_attribute', None):
-                continue
-
-            attrs[name] = obj
+            if getattr(obj, 'is_attribute', None):
+                attrs[name] = obj
+            elif getattr(obj, 'is_extractor', None):
+                attrs[name] = attribute(obj.extract)
 
         dct.update(attrs)
         dct['_attributes'] = set(attrs.keys())
@@ -40,6 +40,8 @@ def _iter_attributes(result):
         for key, value in result.items():
             tmp[key] = _iter_attributes(value)
         result = tmp
+    elif isinstance(result, str) or isinstance(result, bytes):
+        return result
     elif isinstance(result, Iterable):
         result = [_iter_attributes(x) for x in result]
 
