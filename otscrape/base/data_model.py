@@ -34,5 +34,5 @@ class DataModel(metaclass=DataModelMeta):
 def attribute(func):
     wrapper = cached_property(func)
     wrapper.is_attribute = True
-    return func
+    return wrapper
 
