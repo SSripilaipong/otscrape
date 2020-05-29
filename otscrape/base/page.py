@@ -3,14 +3,11 @@ from otscrape.base.loader import Loader
 
 
 class Page(DataModel):
+    def __init__(self, loader: Loader):
+        super().__init__()
 
-    @property
-    def loader(self) -> Loader:
-        raise NotImplementedError()
-
-    def get_loader_params(self) -> dict:
-        raise NotImplementedError()
+        self._loader = loader
 
     @attribute
     def raw(self):
-        return self.loader.load(**self.get_loader_params())
+        return self._loader.load()

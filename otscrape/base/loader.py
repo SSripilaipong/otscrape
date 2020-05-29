@@ -1,3 +1,3 @@
 class Loader:
-    def load(self, **kwargs):
+    def load(self):
         raise NotImplementedError()
