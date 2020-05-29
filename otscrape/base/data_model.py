@@ -3,7 +3,6 @@ from functools import cached_property
 
 class DataModelMeta(type):
     def __new__(mcs, name, bases, dct):
-        print(dct)
         attrs = {}
 
         for name, obj in dct.items():
