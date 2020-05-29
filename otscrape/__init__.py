@@ -1,2 +1,2 @@
 from otscrape.base import Page, attribute
-from otscrape.core import scrape, DummyLoader
+from otscrape.core import scrape, DummyLoader, RequestLoader
