@@ -1,5 +1,4 @@
-from functools import wraps, cached_property
-from collections.abc import Iterable
+from functools import cached_property
 
 
 class DataModelMeta(type):
@@ -32,29 +31,8 @@ class DataModel(metaclass=DataModelMeta):
         return result
 
 
-def _iter_attributes(result):
-    if isinstance(result, DataModel):
-        result = result.get_data()
-    elif isinstance(result, dict):
-        tmp = {}
-        for key, value in result.items():
-            tmp[key] = _iter_attributes(value)
-        result = tmp
-    elif isinstance(result, str) or isinstance(result, bytes):
-        return result
-    elif isinstance(result, Iterable):
-        result = [_iter_attributes(x) for x in result]
-
-    return result
-
-
 def attribute(func):
-    @wraps(func)
-    def wrapper(self):
-        result = func(self)
-        return _iter_attributes(result)
-
-    wrapper = cached_property(wrapper)
+    wrapper = cached_property(func)
     wrapper.is_attribute = True
-    return wrapper
+    return func
 
