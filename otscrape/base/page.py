@@ -1,8 +1,8 @@
-from otscrape.base.serializer import Serializer, attribute
+from otscrape.base.data_model import DataModel, attribute
 from otscrape.base.loader import Loader
 
 
-class Page(Serializer):
+class Page(DataModel):
 
     @property
     def loader(self) -> Loader:

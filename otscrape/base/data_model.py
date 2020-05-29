@@ -2,7 +2,7 @@ from functools import wraps, cached_property
 from collections.abc import Iterable
 
 
-class SerializerMeta(type):
+class DataModelMeta(type):
     def __new__(mcs, name, bases, dct):
         attrs = {}
 
@@ -19,7 +19,7 @@ class SerializerMeta(type):
         return instance
 
 
-class Serializer(metaclass=SerializerMeta):
+class DataModel(metaclass=DataModelMeta):
     _attributes = None
 
     def __init__(self):
@@ -33,7 +33,7 @@ class Serializer(metaclass=SerializerMeta):
 
 
 def _iter_attributes(result):
-    if isinstance(result, Serializer):
+    if isinstance(result, DataModel):
         result = result.get_data()
     elif isinstance(result, dict):
         tmp = {}
