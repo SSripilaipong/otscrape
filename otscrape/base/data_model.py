@@ -3,6 +3,7 @@ from functools import cached_property
 
 class DataModelMeta(type):
     def __new__(mcs, name, bases, dct):
+        print(dct)
         attrs = {}
 
         for name, obj in dct.items():
@@ -10,6 +11,12 @@ class DataModelMeta(type):
                 attrs[name] = obj
             elif getattr(obj, 'is_extractor', None):
                 attrs[name] = attribute(obj.extract)
+
+        for base in bases:
+            if not hasattr(base, '_attributes'):
+                continue
+            for name in getattr(base, '_attributes'):
+                attrs[name] = getattr(base, name)
 
         dct.update(attrs)
         dct['_attributes'] = set(attrs.keys())
