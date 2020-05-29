@@ -8,6 +8,10 @@ class Page(DataModel):
 
         self._loader = loader
 
+    @property
+    def name(self):
+        raise NotImplementedError()
+
     @attribute(project=False)
     def raw(self):
         return self._loader.load()
