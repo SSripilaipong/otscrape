@@ -1,1 +1,1 @@
-from .thread import AutoScaleThread
+from .scrape import scrape
