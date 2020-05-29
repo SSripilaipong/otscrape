@@ -17,14 +17,16 @@ def _set_chain_key_value(data, keys, value):
 
 def iter_attributes(page):
     result = {}
-    queue = [((k,), v) for k, v in page.get_data().items()]
+    queue = [((k,), v) for k, v in page.get_data().items()
+             if getattr(page.__class__, k).do_project]
 
     while queue:
         (keys, value), *queue = queue
 
         if isinstance(value, Page):
             _set_chain_key_value(result, keys, {})
-            queue += [((*keys, k), v) for k, v in value.get_data().items()]
+            queue += [((*keys, k), v) for k, v in value.get_data().items()
+                      if getattr(value.__class__, k).do_project]
         elif isinstance(value, dict):
             _set_chain_key_value(result, keys, {})
             queue += [((*keys, k), v) for k, v in value.items()]

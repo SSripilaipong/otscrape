@@ -37,8 +37,14 @@ class DataModel(metaclass=DataModelMeta):
         return result
 
 
-def attribute(func):
-    wrapper = cached_property(func)
-    wrapper.is_attribute = True
-    return wrapper
+def attribute(func_outer=None, project=True):
+    def _attribute(func):
+        wrapper = cached_property(func)
+        wrapper.is_attribute = True
+        wrapper.do_project = project
+        return wrapper
 
+    if func_outer is None:
+        return _attribute
+
+    return _attribute(func_outer)

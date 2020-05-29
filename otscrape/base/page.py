@@ -8,6 +8,6 @@ class Page(DataModel):
 
         self._loader = loader
 
-    @attribute
+    @attribute(project=False)
     def raw(self):
         return self._loader.load()
