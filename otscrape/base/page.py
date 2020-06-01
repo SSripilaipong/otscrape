@@ -15,3 +15,9 @@ class Page(DataModel):
     @attribute(project=False)
     def raw(self):
         return self._loader.load()
+
+    def __getitem__(self, name):
+        if name not in self._attributes:
+            raise ValueError(f'attribute {name} not found')
+
+        return getattr(self, name)
