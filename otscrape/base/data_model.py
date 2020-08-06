@@ -1,23 +1,28 @@
-from functools import cached_property
+try:
+    from functools import cached_property
+except ImportError:
+    from .futures import cached_property
 
 
 class DataModelMeta(type):
     def __new__(mcs, name, bases, dct):
         attrs = {}
 
+        # add attributes
         for name, obj in dct.items():
             if getattr(obj, 'is_attribute', None):
                 attrs[name] = obj
             elif getattr(obj, 'is_extractor', None):
                 attrs[name] = attribute(obj.extract)
 
+        # add attributes from parents
         for base in bases:
             if not hasattr(base, '_attributes'):
                 continue
             for name in getattr(base, '_attributes'):
                 attrs[name] = getattr(base, name)
-
         dct.update(attrs)
+
         dct['_attributes'] = set(attrs.keys())
 
         instance = super().__new__(mcs, name, bases, dct)
@@ -25,7 +30,7 @@ class DataModelMeta(type):
 
 
 class DataModel(metaclass=DataModelMeta):
-    _attributes = None
+    _attributes = []
 
     def __init__(self):
         pass
@@ -37,14 +42,14 @@ class DataModel(metaclass=DataModelMeta):
         return result
 
 
-def attribute(func_outer=None, project=True):
-    def _attribute(func):
-        wrapper = cached_property(func)
+def attribute(func=None, project=True):
+    def _attribute(_func):
+        wrapper = cached_property(_func)
         wrapper.is_attribute = True
-        wrapper.do_project = project
+        wrapper.project = project
         return wrapper
 
-    if func_outer is None:
+    if func is None:
         return _attribute
 
-    return _attribute(func_outer)
+    return _attribute(func)

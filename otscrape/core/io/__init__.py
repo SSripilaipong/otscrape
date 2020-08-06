@@ -1,2 +1,2 @@
 from .dummy import DummyLoader
-from .request import RequestLoader
+from .request import SimpleRequestLoader

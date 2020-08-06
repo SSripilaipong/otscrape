@@ -1,1 +1,1 @@
-from .loader import RequestLoader
+from .loader import SimpleRequestLoader

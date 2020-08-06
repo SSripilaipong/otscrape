@@ -1,20 +1,28 @@
+from typing import Callable
+
 from otscrape.base.data_model import DataModel, attribute
-from otscrape.base.loader import Loader
 
 
 class Page(DataModel):
-    def __init__(self, loader: Loader):
+    def __init__(self, **kwargs):
         super().__init__()
 
-        self._loader = loader
+        self._loader_kwargs = kwargs
 
     @property
-    def name(self):
+    def name(self) -> str:
         raise NotImplementedError()
 
-    @attribute(project=False)
+    @property
+    def loader(self) -> Callable:
+        raise NotImplementedError()
+
+    @attribute
     def raw(self):
-        return self._loader.load()
+        return self.fetch()
+
+    def fetch(self):
+        return self.loader(**self._loader_kwargs)
 
     def __getitem__(self, name):
         if name not in self._attributes:
