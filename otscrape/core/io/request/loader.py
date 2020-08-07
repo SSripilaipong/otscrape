@@ -1,8 +1,11 @@
+from copy import deepcopy
 import requests
+
+from otscrape.base.mixins import NoFailMixin
 from otscrape.base.loader import Loader
 
 
-class SimpleRequestLoader(Loader):
+class RequestLoaderBase(Loader):
     def __init__(self, method=None, accept_status_codes=(200,), **kwargs):
         super().__init__()
 
@@ -10,25 +13,27 @@ class SimpleRequestLoader(Loader):
         self.kwargs = kwargs or {}
         self.accept_status_codes = accept_status_codes
 
-    def _get_kwargs(self):
-        kwargs = {
-            'method': self.method,
-            'accept_status_codes': self.accept_status_codes,
-        }
-        kwargs = dict(**kwargs, **self.kwargs)
-        return kwargs
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     def post(self, **kwargs):
-        kwargs_ = self._get_kwargs()
-        kwargs_.update(kwargs)
-        kwargs_.update({'method': 'POST'})
-        return SimpleRequestLoader(**kwargs_)
+        result = deepcopy(self)
+        result.method = 'POST'
+        for k, v in kwargs.items():
+            setattr(result, k, v)
+        return result
 
     def get(self, **kwargs):
-        kwargs_ = self._get_kwargs()
-        kwargs_.update(kwargs)
-        kwargs_.update({'method': 'GET'})
-        return SimpleRequestLoader(**kwargs_)
+        result = deepcopy(self)
+        result.method = 'GET'
+        for k, v in kwargs.items():
+            setattr(result, k, v)
+        return result
 
     def make_request(self, url, **kwargs):
         kwargs_update = dict(self.kwargs)
@@ -45,7 +50,7 @@ class SimpleRequestLoader(Loader):
 
         try:
             return self.make_request(url, **kwargs)
-        except requests.RequestException as e:
+        except Exception as e:
             return self.on_request_error(e)
         finally:
             self.on_requested()
@@ -67,3 +72,16 @@ class SimpleRequestLoader(Loader):
 
     def on_request_error(self, exception):
         raise exception
+
+
+class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
+    def __init__(self, method=None, accept_status_codes=(200,), replace_error=None, **kwargs):
+        super().__init__(method=method, accept_status_codes=accept_status_codes, **kwargs)
+        self.replace_error = replace_error
+
+    @property
+    def _return_value_when_fail(self):
+        return self.replace_error
+
+    def on_request_error(self, *args, **kwargs):
+        return self.on_error(*args, **kwargs)
