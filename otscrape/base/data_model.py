@@ -7,6 +7,7 @@ except ImportError:
 class DataModelMeta(type):
     def __new__(mcs, name, bases, dct):
         attrs = {}
+        proj = set()
 
         # add attributes
         for name, obj in dct.items():
@@ -14,6 +15,11 @@ class DataModelMeta(type):
                 attrs[name] = obj
             elif getattr(obj, 'is_extractor', None):
                 attrs[name] = attribute(obj.extract)
+            else:
+                continue
+
+            if getattr(obj, 'do_project', False):
+                proj.add(name)
 
         # add attributes from parents
         for base in bases:
@@ -24,6 +30,7 @@ class DataModelMeta(type):
         dct.update(attrs)
 
         dct['_attributes'] = set(attrs.keys())
+        dct['_project_attrs'] = proj
 
         instance = super().__new__(mcs, name, bases, dct)
         return instance
@@ -31,6 +38,7 @@ class DataModelMeta(type):
 
 class DataModel(metaclass=DataModelMeta):
     _attributes = []
+    _project_attrs = set()
 
     def __init__(self):
         pass
@@ -38,7 +46,8 @@ class DataModel(metaclass=DataModelMeta):
     def get_data(self):
         result = {}
         for key in self._attributes:
-            result[key] = getattr(self, key)
+            if key in self._project_attrs:
+                result[key] = getattr(self, key)
         return result
 
 
@@ -46,7 +55,7 @@ def attribute(func=None, project=True):
     def _attribute(_func):
         wrapper = cached_property(_func)
         wrapper.is_attribute = True
-        wrapper.project = project
+        wrapper.do_project = project
         return wrapper
 
     if func is None:

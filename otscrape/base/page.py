@@ -17,7 +17,7 @@ class Page(DataModel):
     def loader(self) -> Callable:
         raise NotImplementedError()
 
-    @attribute
+    @attribute(project=False)
     def raw(self):
         return self.fetch()
 
