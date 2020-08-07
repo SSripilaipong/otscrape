@@ -13,8 +13,14 @@ class DataModelMeta(type):
         for name, obj in dct.items():
             if getattr(obj, 'is_attribute', None):
                 attrs[name] = obj
+
             elif getattr(obj, 'is_extractor', None):
-                attrs[name] = attribute(obj.extract)
+                def get_extract(extractor_object):
+                    def extract(page):
+                        return extractor_object._extract(page)
+                    return extract
+                attrs[name] = attribute(get_extract(obj), project=obj.do_project)
+
             else:
                 continue
 
@@ -27,12 +33,13 @@ class DataModelMeta(type):
                 continue
             for name in getattr(base, '_attributes'):
                 attrs[name] = getattr(base, name)
-        dct.update(attrs)
+        dct_new = dict(dct)
+        dct_new.update(attrs)
 
-        dct['_attributes'] = set(attrs.keys())
-        dct['_project_attrs'] = proj
+        dct_new['_attributes'] = set(attrs.keys())
+        dct_new['_project_attrs'] = proj
 
-        instance = super().__new__(mcs, name, bases, dct)
+        instance = super().__new__(mcs, name, bases, dct_new)
         return instance
 
 

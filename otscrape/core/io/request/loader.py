@@ -3,34 +3,39 @@ from otscrape.base.loader import Loader
 
 
 class SimpleRequestLoader(Loader):
-    def __init__(self, kwargs=None, accept_status_codes=(200,)):
+    def __init__(self, method=None, accept_status_codes=(200,), **kwargs):
+        super().__init__()
+
+        self.method = method or 'GET'
         self.kwargs = kwargs or {}
         self.accept_status_codes = accept_status_codes
 
     def _get_kwargs(self):
         kwargs = {
-            'kwargs': dict(**self.kwargs, method='GET'),
+            'method': self.method,
             'accept_status_codes': self.accept_status_codes,
         }
+        kwargs = dict(**kwargs, **self.kwargs)
         return kwargs
 
-    def post(self):
-        kwargs = self._get_kwargs()
-        kwargs.update({'method': 'POST'})
-        return SimpleRequestLoader(**kwargs)
+    def post(self, **kwargs):
+        kwargs_ = self._get_kwargs()
+        kwargs_.update(kwargs)
+        kwargs_.update({'method': 'POST'})
+        return SimpleRequestLoader(**kwargs_)
 
-    def get(self):
-        kwargs = self._get_kwargs()
-        kwargs.update({'method': 'GET'})
-        return SimpleRequestLoader(**kwargs)
+    def get(self, **kwargs):
+        kwargs_ = self._get_kwargs()
+        kwargs_.update(kwargs)
+        kwargs_.update({'method': 'GET'})
+        return SimpleRequestLoader(**kwargs_)
 
     def make_request(self, url, **kwargs):
         kwargs_update = dict(self.kwargs)
         kwargs_update.update(kwargs)
-        kwargs_update['method'] = kwargs_update.get('method', 'GET')
         kwargs_update['url'] = url
 
-        resp = requests.request(**kwargs_update)
+        resp = requests.request(self.method, **kwargs_update)
         if resp.status_code in self.accept_status_codes:
             return resp
         resp.raise_for_status()
