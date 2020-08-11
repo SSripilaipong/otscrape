@@ -4,12 +4,13 @@ from otscrape.base.attribute import Attribute
 
 from .request import RequestJSON
 from .text.json import JSONDict
-from .dict import get_item_from_path
+from .dict import DictPath, get_item_from_path
 
 
 parsers = [
     (Response, RequestJSON),
     ((str, bytes), JSONDict),
+    (dict, DictPath),
 ]
 
 
