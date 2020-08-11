@@ -1,6 +1,7 @@
 from typing import Callable
 
-from otscrape.base.data_model import DataModel, attribute
+from otscrape.base.data_model import DataModel
+from otscrape.base import attribute
 
 
 class Page(DataModel):
@@ -8,6 +9,7 @@ class Page(DataModel):
         super().__init__()
 
         self._loader_kwargs = kwargs
+        self.cached = {}
 
     @property
     def name(self) -> str:
