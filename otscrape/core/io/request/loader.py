@@ -54,7 +54,9 @@ class RequestLoaderBase(Loader):
                 if count >= self.max_retries:
                     raise e
             count += 1
-            time.sleep(self.delay)
+
+            if self.delay:
+                time.sleep(self.delay)
 
     def __call__(self, url, **kwargs):
         self.on_requesting()
