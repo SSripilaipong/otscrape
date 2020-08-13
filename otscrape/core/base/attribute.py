@@ -1,9 +1,7 @@
-from otscrape.base.mixins import NoFailMixin
+from otscrape.core.base.mixins import NoFailMixin
 
 
 class AttributeBase:
-    is_attribute = True
-
     def __init__(self, target=None, project=True):
         self.target = target or 'raw'
         self.do_project = project

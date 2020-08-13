@@ -1,6 +1,6 @@
 from requests import Response
 
-from otscrape.base.attribute import Attribute
+from otscrape.core.base.attribute import Attribute
 
 from .request import RequestJSON
 from .text.json import JSONDict

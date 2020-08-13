@@ -1,6 +1,6 @@
 import re
 
-from otscrape.base.attribute import Attribute
+from otscrape.core.base.attribute import Attribute
 
 
 key_pattern = re.compile(r'^[a-zA-Z_]+$')

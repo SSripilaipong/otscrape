@@ -1,7 +1,7 @@
 from typing import Callable
 
-from otscrape.base.data_model import DataModel
-from otscrape.base import attribute
+from otscrape.core.base.data_model import DataModel
+from otscrape.core.base.attribute import attribute
 
 
 class Page(DataModel):
@@ -25,9 +25,3 @@ class Page(DataModel):
 
     def fetch(self):
         return self.loader(**self._loader_kwargs)
-
-    def __getitem__(self, name):
-        if name not in self._attributes:
-            raise ValueError(f'attribute {name} not found')
-
-        return getattr(self, name)

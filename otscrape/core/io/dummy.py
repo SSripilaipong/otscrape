@@ -1,4 +1,4 @@
-from otscrape.base import Loader
+from otscrape.core.base.loader import Loader
 
 
 class DummyLoader(Loader):

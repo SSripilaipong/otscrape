@@ -1,8 +1,8 @@
 from copy import deepcopy
 import requests
 
-from otscrape.base.mixins import NoFailMixin
-from otscrape.base.loader import Loader
+from otscrape.core.base.mixins import NoFailMixin
+from otscrape.core.base.loader import Loader
 
 
 class RequestLoaderBase(Loader):

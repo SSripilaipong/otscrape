@@ -1,6 +1,6 @@
 import json
 
-from otscrape.base.attribute import Attribute
+from otscrape.core.base.attribute import Attribute
 
 
 class JSONDict(Attribute):
