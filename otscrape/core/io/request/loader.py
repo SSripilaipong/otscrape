@@ -88,8 +88,10 @@ class RequestLoaderBase(Loader):
 
 
 class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
-    def __init__(self, method=None, accept_status_codes=(200,), replace_error=None, **kwargs):
-        super().__init__(method=method, accept_status_codes=accept_status_codes, **kwargs)
+    def __init__(self, method=None, accept_status_codes=(200,), max_retries=0, delay=0, replace_error=None, **kwargs):
+
+        super().__init__(method=method, accept_status_codes=accept_status_codes,
+                         max_retries=max_retries, delay=delay, **kwargs)
         self.replace_error = replace_error
 
     @property
