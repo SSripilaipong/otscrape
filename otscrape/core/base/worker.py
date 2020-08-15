@@ -52,6 +52,7 @@ class ThreadWorkersBase:
             w.join()
 
         self.queue = None
+        self.workers = None
 
     def iter_results(self):
         pass
