@@ -101,6 +101,8 @@ class ParallelizableExporterBase(ABC, ExporterBase):
             super().__call__(page)
 
     def open(self):
+        assert not self.ready
+
         if self.parallel:
             self.page_queue = Queue(maxsize=self.queue_size)
 
@@ -113,6 +115,8 @@ class ParallelizableExporterBase(ABC, ExporterBase):
             return super().open()
 
     def close(self):
+        assert self.ready
+
         if self.parallel:
             self.join_queue()
 
