@@ -21,22 +21,22 @@ class ExporterBase:
     def __init__(self):
         self.ready = False
 
-    def _open(self):
-        self.open()
-        self.ready = True
+    def on_open(self):
+        pass
 
-    def _close(self):
-        self.ready = False
-        self.close()
+    def on_close(self):
+        pass
 
     def open(self):
-        pass
+        self.on_open()
+        self.ready = True
 
     def export(self, data):
         raise NotImplementedError()
 
     def close(self):
-        pass
+        self.ready = False
+        self.on_close()
 
     def _process(self, page):
         try:
@@ -54,11 +54,11 @@ class ExporterBase:
         self._process(page)
 
     def __enter__(self):
-        self._open()
+        self.open()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._close()
+        self.close()
 
 
 class ParallelizableExporterBase(ABC, ExporterBase):
@@ -80,7 +80,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
                 self.page_queue.task_done()
 
     def _worker_loop(self):
-        self._open()
+        super().open()
 
         while self.ready:
             try:
@@ -90,7 +90,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
 
             self._process(page)
 
-        self._close()
+        super().close()
 
     def __call__(self, page):
         assert self.ready
@@ -100,7 +100,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
         else:
             super().__call__(page)
 
-    def __enter__(self):
+    def open(self):
         if self.parallel:
             self.page_queue = Queue(maxsize=self.queue_size)
 
@@ -110,9 +110,9 @@ class ParallelizableExporterBase(ABC, ExporterBase):
                 pass
             return self
         else:
-            return super().__enter__()
+            return super().open()
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def close(self):
         if self.parallel:
             self.join_queue()
 
@@ -121,7 +121,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
 
             self.page_queue = None
         else:
-            super().__exit__(exc_type, exc_value, traceback)
+            super().close()
 
     def join_queue(self):
         self.page_queue.join()

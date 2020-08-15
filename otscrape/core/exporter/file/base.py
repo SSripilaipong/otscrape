@@ -11,7 +11,7 @@ class FileExporter(Exporter):
 
         self.file = None
 
-    def open(self):
+    def on_open(self):
         self.file = open(self.filename, self.mode, encoding=self.encoding)
 
     def get_data_to_write(self, data):
@@ -21,5 +21,5 @@ class FileExporter(Exporter):
         self.file.write(self.get_data_to_write(data))
         self.file.flush()
 
-    def close(self):
+    def on_close(self):
         self.file.close()
