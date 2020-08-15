@@ -1,3 +1,4 @@
+from abc import ABC
 from threading import Thread
 from queue import Queue, Empty
 
@@ -17,14 +18,8 @@ def ensure_dict(page):
 
 
 class ExporterBase:
-    def __init__(self, queue_size=0, queue_timeout=3, parallel=False):
-        self.queue_size = queue_size
-        self.queue_timeout = queue_timeout
-        self.parallel = parallel
-
+    def __init__(self):
         self.ready = False
-        self.worker = None
-        self.page_queue = None
 
     def _open(self):
         self.open()
@@ -49,6 +44,37 @@ class ExporterBase:
             self.export(data)
         except Exception as e:
             self.on_export_error(e)
+
+    def on_export_error(self, exception):
+        pass
+
+    def __call__(self, page):
+        assert self.ready
+
+        self._process(page)
+
+    def __enter__(self):
+        self._open()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._close()
+
+
+class ParallelizableExporterBase(ABC, ExporterBase):
+    def __init__(self, queue_size=0, queue_timeout=3, parallel=False):
+        super().__init__()
+
+        self.queue_size = queue_size
+        self.queue_timeout = queue_timeout
+        self.parallel = parallel
+
+        self.worker = None
+        self.page_queue = None
+
+    def _process(self, page):
+        try:
+            super()._process(page)
         finally:
             if self.parallel:
                 self.page_queue.task_done()
@@ -66,16 +92,13 @@ class ExporterBase:
 
         self._close()
 
-    def on_export_error(self, exception):
-        pass
-
     def __call__(self, page):
         assert self.ready
 
         if self.parallel:
             self.page_queue.put(page)
         else:
-            self._process(page)
+            super().__call__(page)
 
     def __enter__(self):
         if self.parallel:
@@ -85,10 +108,9 @@ class ExporterBase:
             self.worker.start()
             while not self.ready:
                 pass
+            return self
         else:
-            self._open()
-
-        return self
+            return super().__enter__()
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.parallel:
@@ -99,7 +121,7 @@ class ExporterBase:
 
             self.page_queue = None
         else:
-            self._close()
+            super().__exit__(exc_type, exc_value, traceback)
 
     def join_queue(self):
         self.page_queue.join()
@@ -108,7 +130,7 @@ class ExporterBase:
         self.worker.join()
 
 
-class Exporter(NoFailMixin, ExporterBase):
+class Exporter(NoFailMixin, ParallelizableExporterBase):
 
     def on_export_error(self, *args, **kwargs):
         message = f'An error occurred while exporting using {self.__class__.__name__}.'
