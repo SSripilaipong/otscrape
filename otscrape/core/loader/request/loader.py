@@ -1,3 +1,4 @@
+import time
 from copy import deepcopy
 import requests
 
@@ -6,12 +7,14 @@ from otscrape.core.base.loader import Loader
 
 
 class RequestLoaderBase(Loader):
-    def __init__(self, method=None, accept_status_codes=(200,), **kwargs):
+    def __init__(self, method=None, accept_status_codes=(200,), max_retries=0, delay=0, **kwargs):
         super().__init__()
 
         self.method = method or 'GET'
         self.kwargs = kwargs or {}
         self.accept_status_codes = accept_status_codes
+        self.max_retries = max_retries
+        self.delay = delay
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -40,10 +43,20 @@ class RequestLoaderBase(Loader):
         kwargs_update.update(kwargs)
         kwargs_update['url'] = url
 
-        resp = requests.request(self.method, **kwargs_update)
-        if resp.status_code in self.accept_status_codes:
-            return resp
-        resp.raise_for_status()
+        count = 0
+        while True:
+            try:
+                resp = requests.request(self.method, **kwargs_update)
+                if resp.status_code in self.accept_status_codes:
+                    return resp
+                resp.raise_for_status()
+            except Exception as e:
+                if count >= self.max_retries:
+                    raise e
+            count += 1
+
+            if self.delay:
+                time.sleep(self.delay)
 
     def __call__(self, url, **kwargs):
         self.on_requesting()
@@ -75,8 +88,10 @@ class RequestLoaderBase(Loader):
 
 
 class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
-    def __init__(self, method=None, accept_status_codes=(200,), replace_error=None, **kwargs):
-        super().__init__(method=method, accept_status_codes=accept_status_codes, **kwargs)
+    def __init__(self, method=None, accept_status_codes=(200,), max_retries=0, delay=0, replace_error=None, **kwargs):
+
+        super().__init__(method=method, accept_status_codes=accept_status_codes,
+                         max_retries=max_retries, delay=delay, **kwargs)
         self.replace_error = replace_error
 
     @property
