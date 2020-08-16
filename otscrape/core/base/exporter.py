@@ -1,5 +1,5 @@
 from abc import ABC
-from threading import Thread
+from threading import Thread, Lock
 from queue import Queue, Empty
 
 from .mixins import NoFailMixin
@@ -69,6 +69,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
         self.queue_timeout = queue_timeout
         self.parallel = parallel
 
+        self.ready_lock = Lock()
         self.worker = None
         self.page_queue = None
 
@@ -79,10 +80,15 @@ class ParallelizableExporterBase(ABC, ExporterBase):
             if self.parallel:
                 self.page_queue.task_done()
 
+    @property
+    def is_ready(self):
+        with self.ready_lock:
+            return self.ready
+
     def _worker_loop(self):
         super().open()
 
-        while self.ready:
+        while self.is_ready:
             try:
                 page = self.page_queue.get(timeout=self.queue_timeout)
             except Empty:
@@ -93,7 +99,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
         super().close()
 
     def __call__(self, page):
-        assert self.ready
+        assert self.is_ready
 
         if self.parallel:
             self.page_queue.put(page)

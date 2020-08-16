@@ -7,4 +7,4 @@ from otscrape.core.base.page import Page
 
 from otscrape.core.exporter import JSONExporter
 
-from otscrape.core.base.worker import Workers
+from otscrape.core.worker import Workers
