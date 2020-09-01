@@ -19,7 +19,7 @@ class FileExporter(Exporter):
 
     def export(self, data):
         self.file.write(self.get_data_to_write(data))
-        self.file.flush()
+        # self.file.flush()
 
     def on_close(self):
         self.file.close()

@@ -80,15 +80,10 @@ class ParallelizableExporterBase(ABC, ExporterBase):
             if self.parallel:
                 self.page_queue.task_done()
 
-    @property
-    def is_ready(self):
-        with self.ready_lock:
-            return self.ready
-
     def _worker_loop(self):
         super().open()
 
-        while self.is_ready:
+        while self.ready:
             try:
                 page = self.page_queue.get(timeout=self.queue_timeout)
             except Empty:
@@ -99,7 +94,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
         super().close()
 
     def __call__(self, page):
-        assert self.is_ready
+        assert self.ready
 
         if self.parallel:
             self.page_queue.put(page)
