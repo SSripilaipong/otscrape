@@ -1,5 +1,7 @@
 from threading import Lock
 
+from otscrape.core.util import ensure_dict
+
 
 class BufferRetryException(Exception):
     pass
@@ -19,9 +21,18 @@ class Buffer:
         with self._counter_lock:
             return self._task_count
 
+    @task_count.setter
+    def task_count(self, value):
+        with self._counter_lock:
+            self._task_count = value
+
     def increase_task_counter(self):
         with self._counter_lock:
             self._task_count += 1
+
+    def decrease_task_counter(self):
+        with self._counter_lock:
+            self._task_count -= 1
 
     def count_remaining_tasks(self):
         if self.total_tasks is not None:
@@ -54,6 +65,6 @@ class Buffer:
             except BufferRetryException:
                 continue
 
-            data = page.get_data()
+            data = ensure_dict(page)
             self.task_done()
             yield data

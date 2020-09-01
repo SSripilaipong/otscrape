@@ -1,9 +1,7 @@
-import traceback
-from multiprocessing.dummy import Pool
-from threading import Lock
+from multiprocessing import Pool, Value
 
 
-class ThreadWorkersBase:
+class PoolWorkersBase:
     def __init__(self, n_workers):
         assert n_workers > 0
 
@@ -12,8 +10,7 @@ class ThreadWorkersBase:
         self.ready = False
         self.workers = None  # type: Pool
 
-        self._remain_tasks = 0
-        self._count_lock = Lock()
+        self._remain_tasks = None
 
     def __enter__(self):
         self.open()
@@ -22,28 +19,10 @@ class ThreadWorkersBase:
     def __exit__(self, exc_type, exc_value, tb):
         self.close()
 
-    def count_remaining_tasks(self):
-        with self._count_lock:
-            return self._remain_tasks
-
-    def _worker_call(self, method, kwargs, callback_always=None):
-        try:
-            method(**kwargs)
-        except Exception as e:
-            traceback.print_exception(type(e), e, e.__traceback__)
-            e = e.__class__('An error occurred inside a worker.').with_traceback(e.__traceback__)
-            traceback.print_exception(type(e), e, None)
-        finally:
-            if callback_always:
-                callback_always()
-
-            with self._count_lock:
-                self._remain_tasks -= 1
-
     def open(self):
         assert not self.ready
 
-        self._remain_tasks = 0
+        self._remain_tasks = Value('i', 0)
         self.workers = Pool(self.n_workers)
         self.ready = True
 
@@ -54,3 +33,15 @@ class ThreadWorkersBase:
 
         self.workers.close()
         self.workers.join()
+
+    def count_remaining_tasks(self):
+        with self._remain_tasks.get_lock():
+            return self._remain_tasks.value
+
+    def increase_task_counter(self):
+        with self._remain_tasks.get_lock():
+            self._remain_tasks.value += 1
+
+    def decrease_task_counter(self):
+        with self._remain_tasks.get_lock():
+            self._remain_tasks.value -= 1
