@@ -1,5 +1,7 @@
 from multiprocessing import Pool, Value
 
+from otscrape.core.util import ensure_page_iter
+
 
 class PoolWorkersBase:
     def __init__(self, n_workers):
@@ -45,3 +47,34 @@ class PoolWorkersBase:
     def decrease_task_counter(self):
         with self._remain_tasks.get_lock():
             self._remain_tasks.value -= 1
+
+
+class PoolCommand:
+    def __init__(self, pool: PoolWorkersBase):
+        self.pool = pool
+
+    def apply(self, page, *args, **kwargs):
+        self.pool.increase_task_counter()
+
+        pages = ensure_page_iter(page)
+
+        pages_ = []
+        for page_ in pages:
+            self.pool.workers.apply_async(self.calculate, args=(page_,), callback=self.callback)
+            pages_.append(page_)
+
+        return self.finish(pages_, *args, **kwargs)
+
+    def _callback(self, x):
+        self.callback(x)
+        self.pool.decrease_task_counter()
+
+    @staticmethod
+    def calculate(page):
+        raise NotImplementedError()
+
+    def callback(self, x):
+        raise NotImplementedError()
+
+    def finish(self, pages, *args, **kwargs):
+        raise NotImplementedError()

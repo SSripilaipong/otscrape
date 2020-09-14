@@ -1,35 +1,5 @@
 from otscrape.core.base.worker import PoolWorkersBase
-from otscrape.core.base.page import Page
-from otscrape.core.base.buffer import Buffer
-
-from otscrape.core.buffer import FIFOBufferBase
-
-
-def get_buffer(type_, buffer_size, buffer_timeout):
-    if isinstance(type_, Buffer):
-        return type_
-    elif isinstance(type_, str):
-        type_ = type_.lower()
-        if type_ == 'fifo':
-            return FIFOBufferBase(buffer_size=buffer_size, buffer_timeout=buffer_timeout)
-        else:
-            raise NotImplementedError(f'A buffer of type {type_} is not implemented.')
-    else:
-        raise TypeError(f'A buffer is expected to be of type str or Buffer. Got {type(type_)}.')
-
-
-def ensure_page_iter(p):
-    if isinstance(p, (list, tuple, set)):
-        if all(isinstance(x, Page) for x in p):
-            return p
-        else:
-            raise TypeError('All elements in the collection must be of type Page.')
-    elif isinstance(p, Page):
-        return [p]
-    elif hasattr(p, '__iter__'):
-        return p
-    else:
-        raise TypeError(f'Page of type {type(p)} is unexpected.')
+from .command import ScrapeCommand, ExportCommand
 
 
 class Workers(PoolWorkersBase):
@@ -37,33 +7,9 @@ class Workers(PoolWorkersBase):
         super().__init__(n_workers=n_workers)
 
     def scrape(self, page, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
-        self.increase_task_counter()
-
-        pages = ensure_page_iter(page)
-        buffer_obj = get_buffer(buffer, buffer_size, buffer_timeout)
-
-        def callback(x):
-            buffer_obj.put(x)
-
-            buffer_obj.increase_task_counter()
-            self.decrease_task_counter()
-
-        i = 0
-        for i, page_ in enumerate(pages):
-            self.workers.apply_async(page_.get_data, callback=callback)
-
-        buffer_obj.total_tasks = i+1
-        return buffer_obj
+        command = ScrapeCommand(self, buffer, buffer_size, buffer_timeout)
+        return command.apply(page)
 
     def export(self, page, exporter):
-        self.increase_task_counter()
-
-        pages = ensure_page_iter(page)
-
-        def callback(x):
-            exporter(x)
-
-            self.decrease_task_counter()
-
-        for page_ in pages:
-            self.workers.apply_async(page_.get_data, callback=callback)
+        command = ExportCommand(self, exporter)
+        return command.apply(page)
