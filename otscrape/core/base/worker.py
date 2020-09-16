@@ -1,6 +1,4 @@
-from multiprocessing import Pool, Value
-
-from otscrape.core.util import ensure_page_iter
+from multiprocessing import Pool, Value, Event
 
 
 class PoolWorkersBase:
@@ -13,6 +11,7 @@ class PoolWorkersBase:
         self.workers = None  # type: Pool
 
         self._remain_tasks = None
+        self._work_done_event = None
 
     def __enter__(self):
         self.open()
@@ -25,6 +24,7 @@ class PoolWorkersBase:
         assert not self.ready
 
         self._remain_tasks = Value('i', 0)
+        self._work_done_event = Event()
         self.workers = Pool(self.n_workers)
         self.ready = True
 
@@ -32,6 +32,10 @@ class PoolWorkersBase:
 
     def close(self):
         assert self.ready
+
+        while self.count_remaining_tasks() > 0:
+            self._work_done_event.wait()
+            self._work_done_event.clear()
 
         self.workers.close()
         self.workers.join()
@@ -47,28 +51,10 @@ class PoolWorkersBase:
     def decrease_task_counter(self):
         with self._remain_tasks.get_lock():
             self._remain_tasks.value -= 1
+        self._work_done_event.set()
 
 
 class PoolCommand:
-    def __init__(self, pool: PoolWorkersBase):
-        self.pool = pool
-
-    def apply(self, page, *args, **kwargs):
-        self.pool.increase_task_counter()
-
-        pages = ensure_page_iter(page)
-
-        pages_ = []
-        for page_ in pages:
-            self.pool.workers.apply_async(self.calculate, args=(page_,), callback=self.callback)
-            pages_.append(page_)
-
-        return self.finish(pages_, *args, **kwargs)
-
-    def _callback(self, x):
-        self.callback(x)
-        self.pool.decrease_task_counter()
-
     @staticmethod
     def calculate(page):
         raise NotImplementedError()

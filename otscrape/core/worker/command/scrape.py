@@ -20,13 +20,14 @@ def get_buffer(type_, buffer_size, buffer_timeout):
 
 
 class ScrapeCommand(PoolCommand):
-    def __init__(self, pool: PoolWorkersBase, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
-        super().__init__(pool)
+    def __init__(self, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
+        super().__init__()
 
         self.buffer = get_buffer(buffer, buffer_size, buffer_timeout)
 
     @staticmethod
     def calculate(page):
+        page.do_load()
         return page.get_data()
 
     def callback(self, x):

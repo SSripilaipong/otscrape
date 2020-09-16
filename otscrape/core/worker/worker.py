@@ -7,6 +7,7 @@ from otscrape.core.base.exporter import Exporter
 from otscrape.core.exporter import JSONExporter
 
 from .command import ScrapeCommand, ExportCommand
+from .executor import CommandExecutor
 
 
 def get_request_exporter(method, url):
@@ -56,10 +57,11 @@ class Workers(PoolWorkersBase):
         super().__init__(n_workers=n_workers)
 
         self._exporter_cache = {}
+        self._executor = CommandExecutor(self)
 
     def scrape(self, page, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
-        command = ScrapeCommand(self, buffer, buffer_size, buffer_timeout)
-        return command.apply(page)
+        command = ScrapeCommand(buffer, buffer_size, buffer_timeout)
+        return self._executor.execute(command, page)
 
     def export(self, page, exporter, **kwargs):
         if not isinstance(exporter, Exporter):
@@ -71,8 +73,8 @@ class Workers(PoolWorkersBase):
 
             exporter = self._exporter_cache[exporter]
 
-        command = ExportCommand(self, exporter)
-        return command.apply(page)
+        command = ExportCommand(exporter)
+        return self._executor.execute(command, page)
 
     def open(self):
         r = super().open()

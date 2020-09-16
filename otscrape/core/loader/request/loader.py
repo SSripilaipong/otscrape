@@ -1,20 +1,68 @@
 import time
+import datetime
 from copy import deepcopy
+from collections import deque
 import requests
+from threading import Lock
 
 from otscrape.core.base.mixins import NoFailMixin
 from otscrape.core.base.loader import Loader
 
 
 class RequestLoaderBase(Loader):
-    def __init__(self, method=None, accept_status_codes=(200,), max_retries=0, delay=0, **kwargs):
+    def __init__(self, method=None,  accept_status_codes=(200,), rate_limit='', max_retries=0, delay=0, **kwargs):
         super().__init__()
 
         self.method = method or 'GET'
         self.kwargs = kwargs or {}
         self.accept_status_codes = accept_status_codes
+        self.rate_limit = rate_limit
+        self.rate_limit_count, self.rate_limit_second = (map(float, rate_limit.split('/'))
+                                                         if rate_limit else (float('inf'), float('inf')))
         self.max_retries = max_retries
         self.delay = delay
+
+        self.lock = Lock()
+        self.timestamp_queue = deque()
+
+    def _check_available_no_lock(self):
+        if not self.timestamp_queue:
+            return True
+
+        now = datetime.datetime.now().timestamp()
+
+        while self.timestamp_queue and now - self.timestamp_queue[0] > self.rate_limit_second:
+            self.timestamp_queue.popleft()
+
+        count = len(self.timestamp_queue)
+        return count < self.rate_limit_count
+
+    def check_available(self, lock=True):
+        if not self.rate_limit:
+            return True
+
+        if lock:
+            with self.lock:
+                return self._check_available_no_lock()
+        return self._check_available_no_lock()
+
+    def get_available_time(self):
+        if self.check_available():
+            return 0
+
+        with self.lock:
+            first = self.timestamp_queue[0]
+
+        now = datetime.datetime.now().timestamp()
+
+        return max(self.rate_limit_second - (now - first), 0)
+
+    def on_loading(self):
+        with self.lock:
+            assert self.check_available(lock=False)
+
+            timestamp = datetime.datetime.now().timestamp()
+            self.timestamp_queue.append(timestamp)
 
     def __deepcopy__(self, memo):
         cls = self.__class__
@@ -38,7 +86,7 @@ class RequestLoaderBase(Loader):
             setattr(result, k, v)
         return result
 
-    def make_request(self, url, **kwargs):
+    def do_load(self, url, **kwargs):
         kwargs_update = dict(self.kwargs)
         kwargs_update.update(kwargs)
         kwargs_update['url'] = url
@@ -58,34 +106,6 @@ class RequestLoaderBase(Loader):
             if self.delay:
                 time.sleep(self.delay)
 
-    def __call__(self, url, **kwargs):
-        self.on_requesting()
-
-        try:
-            return self.make_request(url, **kwargs)
-        except Exception as e:
-            return self.on_request_error(e)
-        finally:
-            self.on_requested()
-
-    def _on_requesting(self):
-        return self.on_requesting()
-
-    def _on_requested(self):
-        return self.on_requested()
-
-    def _on_request_error(self, exception):
-        return self.on_request_error(exception)
-
-    def on_requesting(self):
-        pass
-
-    def on_requested(self):
-        pass
-
-    def on_request_error(self, exception):
-        raise exception
-
 
 class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
     def __init__(self, method=None, accept_status_codes=(200,), max_retries=0, delay=0, replace_error=None, **kwargs):
@@ -98,5 +118,5 @@ class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
     def _return_value_when_fail(self):
         return self.replace_error
 
-    def on_request_error(self, *args, **kwargs):
+    def on_load_error(self, *args, **kwargs):
         return self.on_error(*args, **kwargs)
