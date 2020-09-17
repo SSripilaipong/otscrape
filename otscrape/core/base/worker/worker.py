@@ -33,6 +33,7 @@ class PoolWorkersBase:
     def close(self):
         assert self.ready
 
+        self._work_done_event.clear()
         while self.count_remaining_tasks() > 0:
             self._work_done_event.wait()
             self._work_done_event.clear()
@@ -51,6 +52,7 @@ class PoolWorkersBase:
     def decrease_task_counter(self):
         with self._remain_tasks.get_lock():
             self._remain_tasks.value -= 1
+
         self._work_done_event.set()
 
 

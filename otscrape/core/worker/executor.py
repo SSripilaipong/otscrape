@@ -56,13 +56,13 @@ class CommandExecutor:
         self.pool.workers.apply_async(target, args=args, callback=callback)
 
     def execute(self, command, page, *args, **kwargs):
-        self.pool.increase_task_counter()
-
         pages = ensure_page_iter(page)
         callback = make_callback(command.callback, self.finish)
 
         pages_ = []
         for page_ in pages:
+            self.pool.increase_task_counter()
+
             with self.lock:
                 self.tasks.put((command.calculate, page_, callback))
             self.push_event.set()
