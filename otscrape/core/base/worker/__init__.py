@@ -1,1 +1,2 @@
-from .worker import PoolWorkersBase, PoolCommand
+from .pool import PoolCommand
+from .executor import CommandExecutor

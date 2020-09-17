@@ -1,11 +1,18 @@
+import multiprocessing
 from multiprocessing import Pool, Value, Event
 
 
-class PoolWorkersBase:
-    def __init__(self, n_workers):
-        assert n_workers > 0
+def ensure_n_workers(n_workers):
+    if n_workers == -1 or n_workers is None:
+        n_workers = multiprocessing.cpu_count()
+    else:
+        assert 0 < n_workers < multiprocessing.cpu_count()
+    return n_workers
 
-        self.n_workers = n_workers
+
+class PoolManager:
+    def __init__(self, n_workers=None):
+        self.n_workers = ensure_n_workers(n_workers)
 
         self.ready = False
         self.workers = None  # type: Pool
@@ -66,3 +73,5 @@ class PoolCommand:
 
     def finish(self, pages, *args, **kwargs):
         raise NotImplementedError()
+
+

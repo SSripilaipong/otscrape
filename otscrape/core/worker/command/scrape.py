@@ -1,4 +1,4 @@
-from otscrape.core.base.worker import PoolWorkersBase, PoolCommand
+from otscrape.core.base.worker import PoolCommand
 from otscrape.core.base.buffer import Buffer
 
 from otscrape.core.buffer import FIFOBufferBase, LIFOBufferBase
