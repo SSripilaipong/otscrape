@@ -2,12 +2,12 @@ from abc import ABC
 from threading import Thread, Lock
 from queue import Queue, Empty
 
-from .mixins import NoFailMixin
+from .abstract import WillFail, NoFailMixin
 
 from otscrape.core.util import ensure_dict
 
 
-class ExporterBase:
+class ExporterBase(WillFail):
     def __init__(self):
         self.ready = False
 
@@ -28,20 +28,14 @@ class ExporterBase:
         self.ready = False
         self.on_close()
 
-    def _process(self, page):
-        try:
-            data = ensure_dict(page)
-            self.export(data)
-        except Exception as e:
-            self.on_export_error(e)
-
-    def on_export_error(self, exception):
-        pass
+    def _run(self, page):
+        data = ensure_dict(page)
+        self.export(data)
 
     def __call__(self, page):
         assert self.ready
 
-        self._process(page)
+        self._run_will_fail(page)
 
     def __enter__(self):
         self.open()
@@ -63,9 +57,9 @@ class ParallelizableExporterBase(ABC, ExporterBase):
         self.worker = None
         self.page_queue = None
 
-    def _process(self, page):
+    def _run(self, page):
         try:
-            super()._process(page)
+            super()._run(page)
         finally:
             if self.parallel:
                 self.page_queue.task_done()
@@ -79,7 +73,7 @@ class ParallelizableExporterBase(ABC, ExporterBase):
             except Empty:
                 continue
 
-            self._process(page)
+            self._run_will_fail(page)
 
         super().close()
 
@@ -127,6 +121,6 @@ class ParallelizableExporterBase(ABC, ExporterBase):
 
 class Exporter(NoFailMixin, ParallelizableExporterBase):
 
-    def on_export_error(self, *args, **kwargs):
+    def on_error(self, *args, **kwargs):
         message = f'An error occurred while exporting using {self.__class__.__name__}.'
-        self.on_error(*args, message=message, **kwargs)
+        super().on_error(*args, message=message, **kwargs)

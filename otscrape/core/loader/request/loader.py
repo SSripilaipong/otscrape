@@ -5,7 +5,7 @@ from collections import deque
 import requests
 from threading import Lock
 
-from otscrape.core.base.mixins import NoFailMixin
+from otscrape.core.base.abstract import NoFailMixin
 from otscrape.core.base.loader import Loader
 
 

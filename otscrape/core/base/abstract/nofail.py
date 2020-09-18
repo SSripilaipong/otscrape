@@ -9,11 +9,11 @@ class NoFailMixin:
             if hasattr(super(), 'on_error'):
                 super().on_error(exception)
         except Exception as e:
-            return self.__handle(e, message)
+            return self.__handle_error(e, message)
 
-        return self.__handle(exception, message)
+        return self.__handle_error(exception, message)
 
-    def __handle(self, exception, message=None):
+    def __handle_error(self, exception, message=None):
         traceback.print_exception(type(exception), exception, exception.__traceback__)
         if message:
             exception = exception.__class__(message).with_traceback(exception.__traceback__)
