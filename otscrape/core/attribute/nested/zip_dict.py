@@ -24,9 +24,14 @@ class ZipDict(Attribute):
                 row = {}
                 for key, it in iter_dict.items():
                     if isinstance(it, Iterator):
-                        row[key] = next(it)
+                        try:
+                            v = next(it)
+                        except StopIteration:
+                            v = None
                     else:
-                        row[key] = it
+                        v = it
+
+                    row[key] = v
                 result.append(row)
         except StopIteration:
             pass
