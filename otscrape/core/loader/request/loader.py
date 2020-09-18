@@ -118,5 +118,5 @@ class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
     def _return_value_when_fail(self):
         return self.replace_error
 
-    def on_load_error(self, *args, **kwargs):
-        return self.on_error(*args, **kwargs)
+    def on_error(self, *args, **kwargs):
+        return super().on_error(*args, **kwargs)
