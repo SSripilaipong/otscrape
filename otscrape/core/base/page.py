@@ -10,7 +10,7 @@ class Page(DataModel):
         super().__init__()
 
         self._loader_kwargs = kwargs
-        self.cached = {}
+        self._cached = {}
         self._raw = None
 
     @property

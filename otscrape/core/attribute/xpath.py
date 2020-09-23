@@ -24,11 +24,11 @@ class XPath(Attribute):
 
         cache_name = f'{target}#ETree'
 
-        if cache_name in page.cached:
-            tree = page.cached[cache_name]
+        if cache_name in page._cached:
+            tree = page._cached[cache_name]
         else:
             tree = parse(x)
-            page.cached[cache_name] = tree
+            page._cached[cache_name] = tree
 
         result = tree.xpath(self.xpath)
         if self.only_first:

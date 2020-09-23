@@ -26,8 +26,8 @@ class JSON(Attribute):
         target = self.target
         cache_name = f'{target}#JSON'
 
-        if cache_name in page.cached:
-            y = page.cached[cache_name]
+        if cache_name in page._cached:
+            y = page._cached[cache_name]
         else:
             x = page[target]
 
@@ -38,7 +38,7 @@ class JSON(Attribute):
             else:
                 raise TypeError(f'Unexpected type {x.__class__.__name__} for a JSON attribute.')
 
-            page.cached[cache_name] = y
+            page._cached[cache_name] = y
 
         item = get_item_from_path(y, self.path)
         return item

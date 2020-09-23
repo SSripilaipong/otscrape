@@ -13,9 +13,7 @@ class ZipDict(Attribute):
     def extract(self, page):
         iter_dict = {}
         for key, value in self.structure.items():
-            if isinstance(value, Attribute):
-                v = iter(value.extract(page))
-            elif isinstance(page[value], Iterable):
+            if isinstance(page[value], Iterable):
                 v = iter(page[value])
             else:
                 v = page[value]
