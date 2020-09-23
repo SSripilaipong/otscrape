@@ -33,6 +33,12 @@ class MemoryState:
         else:
             self.state_lock = self.parent.state_lock
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.complete()
+
     def get_data(self):
         data = {
             'visited': self.visited,
