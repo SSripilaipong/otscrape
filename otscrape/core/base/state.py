@@ -146,7 +146,7 @@ class MemoryState:
         return s
 
 
-class FileState(MemoryState):
+class PickleState(MemoryState):
     def __init__(self, filename=None, replace=False):
         self.filename = filename or 'state.pickle'
 
