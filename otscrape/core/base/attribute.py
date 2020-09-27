@@ -6,27 +6,8 @@ class AttributeBase(WillFail):
         self.target = target or 'raw'
         self.do_project = project
 
-        self._value = None
-        self._cached = False
-
-    def __call__(self, page, use_cache=True):
-        if not use_cache:
-            return self._run_will_fail(page)
-
-        if not self._cached:
-            self._value = self._run_will_fail(page)
-            self._cached = True
-        return self._value
-
-    @property
-    def value(self):
-        assert self._cached
-        return self._value
-
-    @value.setter
-    def value(self, v):
-        self._value = v
-        self._cached = True
+    def __call__(self, page):
+        return self._run_will_fail(page)
 
     def _run(self, page):
         return self.extract(page)

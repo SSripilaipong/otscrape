@@ -23,9 +23,7 @@ class Page(DataModel):
 
     @attribute(project=False)
     def raw(self):
-        if self._raw is None:
-            self.fetch()
-        return self._raw
+        return self.fetch()
 
     def fetch(self):
         wait_time = self.loader.get_available_time()
@@ -40,7 +38,7 @@ class Page(DataModel):
                 wait_time = self.loader.get_available_time()
                 continue
 
-        self.do_load()
+        return self.do_load()
 
     def do_load(self):
-        self._raw = self.loader.do_load(**self._loader_kwargs)
+        return self.loader.do_load(**self._loader_kwargs)

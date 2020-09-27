@@ -1,4 +1,4 @@
-from .attribute import AttributeBase
+from .attribute import AttributeBase, Attribute
 
 
 class DataModelMeta(type):
@@ -35,12 +35,12 @@ class DataModelMeta(type):
 
 
 class DataModel(metaclass=DataModelMeta):
-    _attrs = {}
-    _project_attrs = set()
-    _attribute_ids = {}
+    _attrs = {}  # name -> obj
+    _project_attrs = set()  # names
+    _attribute_ids = {}  # id -> name
 
     def __init__(self):
-        pass
+        self._attr_cached = {}  # name -> value
 
     def get_data(self):
         result = {}
@@ -49,16 +49,34 @@ class DataModel(metaclass=DataModelMeta):
                 result[key] = self[key]
         return result
 
+    def _get_or_compute_attr(self, name):
+        if name not in self._attr_cached:
+            self._attr_cached[name] = self._attrs[name](self)
+
+        return self._attr_cached[name]
+
+    def __setitem__(self, key, value):
+        if key not in self._attrs:
+            raise ValueError(f'Expected an existing attribute name. Got "{key}".')
+
+        obj = self._attrs[key]
+        if type(obj) is not Attribute:
+            raise TypeError(f'Type of attribute "{key}" must be Attribute.')
+
+        if key not in self._attr_cached:
+            self._attr_cached[key] = value
+
     def __getitem__(self, key):
         if isinstance(key, AttributeBase):
             id_ = id(key)
-            if id_ in self._attribute_ids:
-                key = self._attribute_ids[id_]
-                return self._attrs[key](self)
+            if id_ not in self._attribute_ids:
+                return key(self)
             else:
-                return key(self, use_cache=False)
+                name = self._attribute_ids[id_]
 
         elif isinstance(key, str):
-            return self._attrs[key](self)
+            name = key
         else:
             raise TypeError(f'attribute {key} should be of type str or AttributeBase')
+
+        return self._get_or_compute_attr(name)
