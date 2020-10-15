@@ -7,6 +7,7 @@ from threading import Lock
 
 from otscrape.core.base.abstract import NoFailMixin
 from otscrape.core.base.loader import Loader
+from otscrape.core.base.exception import LoaderNotAvailableException
 
 
 class RequestLoaderBase(Loader):
@@ -59,7 +60,8 @@ class RequestLoaderBase(Loader):
 
     def on_loading(self):
         with self.lock:
-            assert self.check_available(lock=False)
+            if not self.check_available(lock=False):
+                raise LoaderNotAvailableException()
 
             timestamp = datetime.datetime.now().timestamp()
             self.timestamp_queue.append(timestamp)

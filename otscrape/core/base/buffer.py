@@ -67,4 +67,5 @@ class Buffer:
 
             data = ensure_dict(page)
             self.task_done()
+
             yield data

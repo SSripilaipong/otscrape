@@ -1,20 +1,34 @@
 from threading import Thread, Lock
 from threading import Event
-from queue import Queue
+from queue import Queue, Empty
 
+from otscrape.core.base.exception import (DropCommandException,
+                                          LoaderNotAvailableException)
 from otscrape.core.util import ensure_page_iter
 
-from .pool import PoolManager
+from .pool import PoolManager, PoolCommand
 
 
 class Task:
-    def __init__(self, calculation, page, callback):
-        self.calculation = calculation
+    def __init__(self, command: PoolCommand, page, callback):
+        self.command = command
         self.page = page
-        self.callback = callback
 
-    def do_on_loading(self):
-        self.page.loader.on_loading()
+        self.command.validate_input(self.page)
+
+        self.calculation = command.calculate
+        self.callback = self.make_callback(command.callback, callback)
+
+    def prepare(self):
+        return self.command.prepare(self.page)
+
+    @staticmethod
+    def make_callback(callback, finish):
+        def f(x):
+            callback(x)
+            finish()
+
+        return f
 
 
 class TaskManager(Thread):
@@ -28,11 +42,16 @@ class TaskManager(Thread):
         self.executor.wait_task_exist_or_end()
 
         while self.running or self.executor.n_waiting_tasks:
-            task = self.executor.get_task()
+            try:
+                task = self.executor.get_task(timeout=3.0)
+            except Empty:
+                continue
 
             try:
-                task.do_on_loading()
-            except AssertionError:
+                task.prepare()
+            except DropCommandException:
+                continue
+            except LoaderNotAvailableException:
                 self.executor.put_task(task)
                 continue
 
@@ -67,11 +86,11 @@ class CommandExecutor:
 
         self.running = True
 
-    def close(self):
+    def close(self, force=False):
         self._stop()
 
         self.task_manager.close()
-        self.pool.close()
+        self.pool.close(force=force)
 
         self.running = False
 
@@ -79,8 +98,8 @@ class CommandExecutor:
         self.running = False
         self.push_event.set()
 
-    def get_task(self):
-        return self.tasks.get()
+    def get_task(self, timeout=3.0):
+        return self.tasks.get(timeout=timeout)
 
     def put_task(self, task):
         self.tasks.put(task)
@@ -121,15 +140,14 @@ class CommandExecutor:
 
         self.pool.workers.apply_async(target, args=args, callback=callback)
 
-    def execute(self, command, page, *args, **kwargs):
+    def execute(self, command: PoolCommand, page, *args, **kwargs):
         pages = ensure_page_iter(page)
-        callback = make_callback(command.callback, self.finish)
 
         pages_ = []
         for page_ in pages:
             self.pool.increase_task_counter()
 
-            task = Task(command.calculate, page_, callback)
+            task = Task(command, page_, callback=self.finish)
 
             self.tasks.put(task)
 
@@ -145,11 +163,3 @@ class CommandExecutor:
             self.curr_run_count -= 1
 
         self.done_event.set()
-
-
-def make_callback(callback, finish):
-    def f(x):
-        callback(x)
-        finish()
-
-    return f

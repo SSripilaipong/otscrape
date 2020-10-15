@@ -1,6 +1,7 @@
 from otscrape.core.base.worker import PoolCommand
 from otscrape.core.base.buffer import Buffer
 
+from otscrape.core.base.exception import DropCommandException, InvalidPageStructureException
 from otscrape.core.buffer import FIFOBufferBase, LIFOBufferBase
 
 
@@ -25,15 +26,25 @@ class ScrapeCommand(PoolCommand):
 
         self.buffer = get_buffer(buffer, buffer_size, buffer_timeout)
 
+    def prepare(self, page):
+        super().prepare(page)
+
     @staticmethod
     def calculate(page):
         page.do_load()
-        return page.get_data()
+        page.get_data()
+        page.prune()
+        return page
 
-    def callback(self, x):
-        self.buffer.put(x)
+    def callback(self, page):
+        super().callback(page)
+
+        data = page.get_data()
+        self.buffer.put(data)
         self.buffer.increase_task_counter()
 
     def finish(self, pages, *args, **kwargs):
+        super().finish(pages, *args, **kwargs)
+
         self.buffer.total_tasks = len(pages)
         return self.buffer

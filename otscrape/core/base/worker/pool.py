@@ -37,13 +37,14 @@ class PoolManager:
 
         return self
 
-    def close(self):
+    def close(self, force=False):
         assert self.ready
 
-        self._work_done_event.clear()
-        while self.count_remaining_tasks() > 0:
-            self._work_done_event.wait()
+        if not force:
             self._work_done_event.clear()
+            while self.count_remaining_tasks() > 0:
+                self._work_done_event.wait()
+                self._work_done_event.clear()
 
         self.workers.close()
         self.workers.join()
@@ -65,13 +66,18 @@ class PoolManager:
 
 class PoolCommand:
     @staticmethod
+    def prepare(page):
+        page.loader.do_on_loading()
+
+    def validate_input(self, page):
+        return
+
+    @staticmethod
     def calculate(page):
         raise NotImplementedError()
 
     def callback(self, x):
-        raise NotImplementedError()
+        return
 
     def finish(self, pages, *args, **kwargs):
-        raise NotImplementedError()
-
-
+        return

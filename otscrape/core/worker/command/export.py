@@ -71,7 +71,6 @@ class ExportCommand(PoolCommand):
         return page.get_data()
 
     def callback(self, x):
-        self.exporter(x)
+        super().callback(x)
 
-    def finish(self, pages, *args, **kwargs):
-        return
+        self.exporter(x)

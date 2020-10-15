@@ -42,3 +42,16 @@ class Page(DataModel):
 
     def do_load(self):
         return self.loader.do_load(**self._loader_kwargs)
+
+    def prune(self):
+        cache_result = {}
+
+        attrs = self._project_attrs
+        if 'key' in self._attrs:
+            attrs.add('key')
+
+        for attr in attrs:
+            self._cached = {}
+            cache_result[attr] = self._attr_cached[attr]
+
+        self._attr_cached = cache_result

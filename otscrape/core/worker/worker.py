@@ -1,3 +1,4 @@
+from otscrape.core.base.exception import FatalException
 from otscrape.core.base.worker import CommandExecutor
 
 from .command import ScrapeCommand, ExportCommand
@@ -21,8 +22,8 @@ class Workers:
         self._exporter_cache = {}
         return self
 
-    def close(self):
-        self._executor.close()
+    def close(self, force=False):
+        self._executor.close(force=force)
 
         for exporter in self._exporter_cache.values():
             exporter.close()
@@ -32,4 +33,5 @@ class Workers:
         return self.open()
 
     def __exit__(self, exc_type, exc_value, tb):
-        self.close()
+        force = exc_type is not None and isinstance(exc_type(), (FatalException, KeyboardInterrupt))
+        self.close(force=force)
