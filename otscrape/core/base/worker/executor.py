@@ -9,28 +9,6 @@ from otscrape.core.util import ensure_page_iter
 from .pool import PoolManager, PoolCommand
 
 
-class Task:
-    def __init__(self, command: PoolCommand, page, callback):
-        self.command = command
-        self.page = page
-
-        self.command.validate_input(self.page)
-
-        self.calculation = command.calculate
-        self.callback = self.make_callback(command.callback, callback)
-
-    def prepare(self):
-        return self.command.prepare(self.page)
-
-    @staticmethod
-    def make_callback(callback, finish):
-        def f(x):
-            callback(x)
-            finish()
-
-        return f
-
-
 class TaskManager(Thread):
     def __init__(self, executor):
         self.executor = executor
@@ -105,7 +83,7 @@ class CommandExecutor:
         self.tasks.put(task)
 
     def execute_task(self, task):
-        self._apply(task.calculation, (task.page,), task.callback)
+        self._apply(task.calculation, (task.page,), self.make_callback(task.callback))
 
     def wait_pool(self):
         self.done_event.clear()
@@ -147,7 +125,7 @@ class CommandExecutor:
         for page_ in pages:
             self.pool.increase_task_counter()
 
-            task = Task(command, page_, callback=self.finish)
+            task = command.create_task(page_)
 
             self.tasks.put(task)
 
@@ -163,3 +141,10 @@ class CommandExecutor:
             self.curr_run_count -= 1
 
         self.done_event.set()
+
+    def make_callback(self, callback):
+        def f(x):
+            callback(x)
+            self.finish()
+
+        return f

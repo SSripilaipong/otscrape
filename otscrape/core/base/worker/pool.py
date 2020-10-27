@@ -81,3 +81,21 @@ class PoolCommand:
 
     def finish(self, pages, *args, **kwargs):
         return
+
+    def create_task(self, page):
+        task = PoolTask(self, page)
+        return task
+
+
+class PoolTask:
+    def __init__(self, command: PoolCommand, page):
+        self.command = command
+        self.page = page
+
+        self.command.validate_input(self.page)
+
+        self.calculation = command.calculate
+        self.callback = command.callback
+
+    def prepare(self):
+        return self.command.prepare(self.page)
