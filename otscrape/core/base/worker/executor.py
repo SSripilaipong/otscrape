@@ -118,11 +118,17 @@ class CommandExecutor:
 
         self.pool.workers.apply_async(target, args=args, callback=callback)
 
-    def execute(self, command: PoolCommand, page, *args, **kwargs):
+    def execute(self, command: PoolCommand, page, state=None, *args, **kwargs):
         pages = ensure_page_iter(page)
 
         pages_ = []
         for page_ in pages:
+            if state:
+                if state.is_complete(name=page_):
+                    continue
+
+                _ = state.substate(page_)
+
             self.pool.increase_task_counter()
 
             task = command.create_task(page_)

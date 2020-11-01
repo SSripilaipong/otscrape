@@ -12,3 +12,7 @@ class FatalException(Exception):
 
 class InvalidPageStructureException(FatalException):
     pass
+
+
+class StateOnWaitingException(Exception):
+    pass

@@ -5,15 +5,15 @@ from otscrape.core.base.exception import DropCommandException, InvalidPageStruct
 from otscrape.core.buffer import FIFOBufferBase, LIFOBufferBase
 
 
-def get_buffer(type_, buffer_size, buffer_timeout):
+def get_buffer(workers, type_, buffer_size, buffer_timeout):
     if isinstance(type_, Buffer):
         return type_
     elif isinstance(type_, str):
         type_ = type_.lower()
         if type_ == 'fifo':
-            return FIFOBufferBase(buffer_size=buffer_size, buffer_timeout=buffer_timeout)
+            return FIFOBufferBase(workers, buffer_size=buffer_size, buffer_timeout=buffer_timeout)
         elif type_ == 'lifo':
-            return LIFOBufferBase(buffer_size=buffer_size, buffer_timeout=buffer_timeout)
+            return LIFOBufferBase(workers, buffer_size=buffer_size, buffer_timeout=buffer_timeout)
         else:
             raise NotImplementedError(f'A buffer of type {type_} is not implemented.')
     else:
@@ -21,10 +21,10 @@ def get_buffer(type_, buffer_size, buffer_timeout):
 
 
 class ScrapeCommand(PoolCommand):
-    def __init__(self, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
-        super().__init__()
+    def __init__(self, workers, buffer='FIFO', buffer_size=0, buffer_timeout=3.0, state=None):
+        super().__init__(state=state)
 
-        self.buffer = get_buffer(buffer, buffer_size, buffer_timeout)
+        self.buffer = get_buffer(workers, buffer, buffer_size, buffer_timeout)
 
     def prepare(self, page):
         super().prepare(page)
@@ -36,11 +36,10 @@ class ScrapeCommand(PoolCommand):
         page.prune()
         return page
 
-    def callback(self, page):
-        super().callback(page)
+    def callback(self, x):
+        result = super().callback(x)
 
-        data = page.get_data()
-        self.buffer.put(data)
+        self.buffer.put(result)
         self.buffer.increase_task_counter()
 
     def finish(self, pages, *args, **kwargs):

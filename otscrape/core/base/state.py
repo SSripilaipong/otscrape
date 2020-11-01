@@ -1,8 +1,10 @@
 import os
-from typing import Dict, Set, Any
+from collections import Hashable
+from typing import Dict, Set, Any, List, Tuple
 import pickle
 
-from .page import Page
+from .page.page import Page
+from otscrape.core.base.exception import StateOnWaitingException
 
 
 def ensure_key(key):
@@ -14,116 +16,133 @@ def ensure_key(key):
     return key
 
 
+def ensure_keys(keys):
+    if isinstance(keys, (list, tuple)) or (not isinstance(keys, str) and hasattr(keys, '__iter__')):
+        return [ensure_key(key) for key in keys]
+
+    return [ensure_key(keys)]
+
+
 class MemoryState:
     def __init__(self, name=None, parent=None):
-        self.name = name or 'root'
-        self.parent = parent  # type: MemoryState
+        assert isinstance(name, Hashable)
+        self.name = name or None  # type: Hashable
+        self.path = parent.get_subpath(name) if parent else ()  # type: Tuple[Hashable]
 
-        self.visited = set()  # type: Set[Any]
-        self.visiting = {}  # type: Dict[Any, MemoryState]
+        if parent:
+            self.save = parent.save
+
+        self.wait_list = {}  # type: Dict[Tuple[Hashable], MemoryState]
+        self.notify_list = {}  # type: Dict[Tuple[Hashable], MemoryState]
+        self.complete_list = {}  # type: Dict[Tuple[Hashable], MemoryState]
 
         self._running_number = 0
         self._complete = False
+        self._holding = False
 
-    def get_data(self, recursive=True):
-        if recursive:
-            visiting = {k: v.get_data() if v else v for k, v in self.visiting.items()}
-        else:
-            visiting = self.visiting
+    def get_subpath(self, name):
+        path = (*self.path, name)
+        return path
 
-        data = {
-            'name': self.name,
-            'visited': self.visited,
-            'visiting': visiting,
-            '_complete': self._complete,
-        }
-        return data
+    def reset(self):
+        self._running_number = 0
 
-    def set_data(self, data):
-        self.name = data['name']
-        self.visited = data['visited']
-        self.visiting = data['visiting']
-        self._complete = data['_complete']
+    def __setstate__(self, state):
+        self.__dict__ = state
+        self.reset()
+
+    def wait_for(self, other, notify=True):
+        assert isinstance(other, MemoryState)
+
+        self.wait_list[other.path] = other
+
+        if notify:
+            other.notify_list[self.path] = self
+
+    def hold(self):
+        self._holding = True
+
+    def release(self):
+        self._holding = False
+
+    def notify(self, other):
+        assert other.path in self.wait_list
+        self.wait_list.pop(other.path)
+        self.complete_list[other.path] = other
+
+        self.try_complete()
+
+    def try_complete(self):
+        try:
+            self.complete()
+        except StateOnWaitingException:
+            pass
 
     def complete(self):
-        assert not self._complete and len(self.visiting) == 0
+        if self.wait_list:
+            raise StateOnWaitingException()
 
-        self._complete = True
+        assert not self._complete and not self.wait_list
 
-    def is_complete(self):
-        return self._complete
+        if not self._holding:
+            self._complete = True
 
-    def is_visited(self, key):
-        key = ensure_key(key)
-        return key in self.visited
+            for p in list(self.notify_list.keys()):
+                state = self.notify_list.pop(p)
+                state.notify(self)
+
+        self.save()
+
+    def is_complete(self, state=None, name=None):
+        if state or name:
+            if state:
+                path = state.path
+            else:
+                name = ensure_key(name)
+                path = self.get_subpath(name)
+
+            return path in self.complete_list
+        else:
+            return self._complete
+
+    def is_waiting(self, state):
+        return state.path in self.wait_list
 
     def _create_memory_instance(self, name):
         return MemoryState(name=name, parent=self)
 
-    def create_substate(self, name):
-        assert not self.is_visited(name)
+    def _create_substate(self, path, wait=True, notify=True):
+        state = self.wait_list.get(path, None)
 
-        sub = self.visiting.get(name, None)
-        if sub is None:
-            sub = self._create_memory_instance(name)
+        if state is None:
+            state = self._create_memory_instance(path[-1])
 
-        self.visiting[name] = sub
-        return sub
+        assert not self.is_complete(state)
 
-    def done(self, key):
-        key = ensure_key(key)
-        assert key in self.visiting
+        if wait:
+            self.wait_for(state, notify=notify)
 
-        sub = self.visiting[key]
-        assert isinstance(sub, MemoryState) and sub.is_complete()
+        return state
 
-        self.visiting.pop(key)
-        self.visited.add(key)
+    def substate(self, name=None, suffix=None):
+        assert name or suffix
 
-    @classmethod
-    def build_from_dict(cls, data, parent):
-        if data is None:
-            return data
-
-        s = cls(data['name'], parent)
-
-        s.visited = data['visited']
-        s._complete = data['_complete']
-        s.visiting = {k: cls.build_from_dict(v, parent=s) for k, v in data['visiting'].items()}
-
-        return s
-
-    def get_fullname(self):
-        s = self
-        names = []
-        while s.parent:
-            names.append(s.name)
-            s = s.parent
-
-        return list(reversed(names))
-
-    def get_substate(self, keys):
-        ss = self
-
-        for key in keys:
-            ss = ss.visiting.get(key, None)
-            if ss is None:
-                raise ValueError(f'State of key {key} is not found.')
-
-        return ss
-
-    def visit(self, key=None, suffix=None):
-        assert key or suffix
-        key = ensure_key(key)
-
-        if key is None:
+        if name is None:
             key = 'step{i}:{suffix}'.format(suffix=suffix, i=self._running_number)
             self._running_number += 1
-
-        if key in self.visiting:
-            ss = self.visiting[key]
         else:
-            ss = self.create_substate(key)
+            key = ensure_key(name)
+
+        path = self.get_subpath(key)
+
+        assert path not in self.notify_list
+
+        if path in self.complete_list:
+            ss = self.complete_list[path]
+        elif path in self.wait_list:
+            ss = self.wait_list[path]
+        else:
+            ss = self._create_substate(path)
 
         return ss
 
@@ -134,7 +153,7 @@ class MemoryState:
         if not exc_type and not self._complete:
             self.complete()
 
-    def iter(self, it, if_exists='skip'):
+    def iter(self, it, if_exists='skip', key=None):
         if self._complete:
             return
 
@@ -142,9 +161,16 @@ class MemoryState:
         assert if_exists in ('skip', 'skipall', 'stop')
 
         skipall = False
-        state = self.visit(suffix='iter')
+        state = self.substate(suffix='iter')
+        state.hold()
+
         for x in it:
-            if state.is_visited(x):
+            if key:
+                k = key(x)
+            else:
+                k = x
+
+            if state.is_complete(name=k):
                 if skipall:
                     continue
 
@@ -154,102 +180,52 @@ class MemoryState:
                     skipall = True
                     continue
                 elif if_exists == 'stop':
-                    return
+                    break
 
-            ss = state.visit(x)
+            ss = state.substate(k)
+            ss.hold()
 
             yield ss, x
 
-            ss.complete()
-            state.done(x)
+            ss.release()
+            ss.try_complete()
 
-        state.complete()
-        self.done(state.name)
-
-    def break_loop(self, key):
-        key = ensure_key(key)
-        ss = self.visiting[key]
-
-        ss.complete()
-        self.done(key)
+        state.release()
+        state.try_complete()
 
 
-class SavableMemoryState(MemoryState):
-    def __init__(self, name=None, parent=None, replace=False):
-        super().__init__(name, parent)
-
-        if not parent:
-            if replace:
-                if self.exists():
-                    self.clean()
-            elif self.exists():
-                self.load()
-
-    def _create_memory_instance(self, name):
-        return SavableMemoryState(name=name, parent=self, replace=False)
-
-    def exists(self):
-        raise NotImplementedError()
-
-    def load(self):
-        raise NotImplementedError()
-
-    def save(self):
-        raise NotImplementedError()
-
-    def clean(self):
-        raise NotImplementedError()
-
-    def _save(self):
-        if self.parent:
-            self.parent._save()
-        else:
-            self.save()
-
-    def done(self, key):
-        super().done(key)
-
-        self._save()
-
-    def complete(self):
-        super().complete()
-
-        self._save()
-
-
-class PickleState(SavableMemoryState):
-    def __init__(self, filename=None, replace=False):
+class PickleStateBase(MemoryState):
+    def __init__(self, filename=None):
         self.filename = filename or 'state.pickle'
 
-        super().__init__(replace=replace)
+        super().__init__()
 
-    def exists(self):
-        return os.path.exists(self.filename)
+    @staticmethod
+    def exists(filename):
+        return os.path.exists(filename)
 
-    def get_data(self, recursive=True):
-        data = super().get_data(recursive=recursive)
-        data['filename'] = self.filename
-        return data
+    @staticmethod
+    def load(filename):
+        with open(filename, 'rb') as file:
+            return pickle.load(file)
 
-    def set_data(self, data):
-        super().set_data(data)
-        self.filename = data['filename']
-
-    def load(self):
-        with open(self.filename, 'rb') as file:
-            p = pickle.load(file)
-
-            s = SavableMemoryState.build_from_dict(p, parent=self)
-
-            data = s.get_data(recursive=False)
-            data['filename'] = self.filename
-            self.set_data(data)
+    @staticmethod
+    def clean(filename):
+        if os.path.exists(filename):
+            os.remove(filename)
 
     def save(self):
         with open(self.filename, 'wb') as file:
-            data = self.get_data()
-            pickle.dump(data, file)
+            pickle.dump(self, file)
 
-    def clean(self):
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
+
+def PickleState(filename, replace=False):
+    exists = PickleStateBase.exists(filename)
+
+    if replace:
+        if exists:
+            PickleStateBase.clean(filename)
+    elif exists:
+        return PickleStateBase.load(filename)
+
+    return PickleStateBase(filename)

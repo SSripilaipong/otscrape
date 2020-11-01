@@ -1,6 +1,7 @@
 from threading import Lock
 
 from otscrape.core.util import ensure_dict
+from otscrape.core.base.wrapper import PageWrapper
 
 
 class BufferRetryException(Exception):
@@ -8,7 +9,8 @@ class BufferRetryException(Exception):
 
 
 class Buffer:
-    def __init__(self, buffer_size=0, buffer_timeout=None, total_tasks=None):
+    def __init__(self, workers, buffer_size=0, buffer_timeout=None, total_tasks=None):
+        self.workers = workers
         self.buffer_size = buffer_size
         self.buffer_timeout = buffer_timeout
         self.total_tasks = total_tasks
@@ -52,20 +54,33 @@ class Buffer:
     def get(self):
         raise NotImplementedError()
 
-    def put(self, x):
+    def put(self, x: PageWrapper):
         raise NotImplementedError()
 
     def task_done(self):
         pass
 
-    def __iter__(self):
+    def _iter(self):
         while not self.empty() or self.count_remaining_tasks():
             try:
-                page = self.get()
+                obj = self.get()
             except BufferRetryException:
                 continue
 
-            data = ensure_dict(page)
             self.task_done()
+            yield obj
 
-            yield data
+    def __iter__(self):
+        if not self.workers.current_state:
+            for obj in self._iter():
+                yield obj.page
+            return
+
+        for obj in self.workers.iter(self._iter(), key=lambda o: o.page):
+            page = obj.page
+            state = obj.state
+
+            ss = self.workers.current_state
+            state.wait_for(ss)
+
+            yield page

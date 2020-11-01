@@ -4,8 +4,8 @@ from otscrape.core.base.buffer import Buffer, BufferRetryException
 
 
 class QueueBufferBase(Buffer):
-    def __init__(self, buffer_size=0, buffer_timeout=3.0, total_tasks=None):
-        super().__init__(buffer_size, buffer_timeout, total_tasks)
+    def __init__(self, workers, buffer_size=0, buffer_timeout=3.0, total_tasks=None):
+        super().__init__(workers, buffer_size, buffer_timeout, total_tasks)
 
         self._buffer = self.QueueClass(maxsize=self.buffer_size)
 

@@ -1,6 +1,8 @@
 import multiprocessing
 from multiprocessing import Pool, Value, Event
 
+from otscrape.core.base.wrapper import PageWrapper
+
 
 def ensure_n_workers(n_workers):
     if n_workers == -1 or n_workers is None:
@@ -65,6 +67,9 @@ class PoolManager:
 
 
 class PoolCommand:
+    def __init__(self, state=None):
+        self.state = state
+
     @staticmethod
     def prepare(page):
         page.loader.do_on_loading()
@@ -77,7 +82,8 @@ class PoolCommand:
         raise NotImplementedError()
 
     def callback(self, x):
-        return
+        result = PageWrapper(x, state=self.state.substate(x))
+        return result
 
     def finish(self, pages, *args, **kwargs):
         return

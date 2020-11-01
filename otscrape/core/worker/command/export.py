@@ -51,8 +51,8 @@ def get_exporter(exporter, **kwargs):
 
 
 class ExportCommand(PoolCommand):
-    def __init__(self, exporter: Exporter, exporter_cache, **kwargs):
-        super().__init__()
+    def __init__(self, exporter: Exporter, exporter_cache, state=None, **kwargs):
+        super().__init__(state=state)
 
         if not isinstance(exporter, Exporter):
             if exporter not in exporter_cache:
@@ -71,6 +71,6 @@ class ExportCommand(PoolCommand):
         return page.get_data()
 
     def callback(self, x):
-        super().callback(x)
+        _ = super().callback(x)
 
         self.exporter(x)
