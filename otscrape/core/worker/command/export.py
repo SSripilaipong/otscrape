@@ -68,9 +68,14 @@ class ExportCommand(PoolCommand):
     @staticmethod
     def calculate(page: Page):
         page.do_load()
-        return page.get_data()
+        page.get_data()
+        page.prune()
+        return page
 
     def callback(self, x):
-        _ = super().callback(x)
+        result = super().callback(x)
 
-        self.exporter(x)
+        self.exporter(result.page)
+
+        if result.state:
+            result.state.try_complete()

@@ -1,5 +1,6 @@
 import os
 from collections import Hashable
+from threading import Lock
 from typing import Dict, Set, Any, List, Tuple
 import pickle
 
@@ -40,6 +41,8 @@ class MemoryState:
         self._complete = False
         self._holding = False
 
+        self._lock = Lock()
+
     def get_subpath(self, name):
         path = (*self.path, name)
         return path
@@ -49,26 +52,38 @@ class MemoryState:
 
     def __setstate__(self, state):
         self.__dict__ = state
+        self._lock = Lock()
         self.reset()
+
+    def __getstate__(self):
+        with self._lock:
+            state = self.__dict__.copy()
+        del state['_lock']
+        return state
 
     def wait_for(self, other, notify=True):
         assert isinstance(other, MemoryState)
 
-        self.wait_list[other.path] = other
+        with self._lock:
+            self.wait_list[other.path] = other
 
         if notify:
-            other.notify_list[self.path] = self
+            with other._lock:
+                other.notify_list[self.path] = self
 
     def hold(self):
-        self._holding = True
+        with self._lock:
+            self._holding = True
 
     def release(self):
-        self._holding = False
+        with self._lock:
+            self._holding = False
 
     def notify(self, other):
-        assert other.path in self.wait_list
-        self.wait_list.pop(other.path)
-        self.complete_list[other.path] = other
+        with self._lock:
+            assert other.path in self.wait_list
+            self.wait_list.pop(other.path)
+            self.complete_list[other.path] = other
 
         self.try_complete()
 
@@ -79,16 +94,21 @@ class MemoryState:
             pass
 
     def complete(self):
-        if self.wait_list:
-            raise StateOnWaitingException()
+        with self._lock:
+            if self.wait_list:
+                raise StateOnWaitingException()
 
-        assert not self._complete and not self.wait_list
+            assert not self._complete and not self.wait_list
 
-        if not self._holding:
-            self._complete = True
+            holding = self._holding
+
+        if not holding:
+            with self._lock:
+                self._complete = True
 
             for p in list(self.notify_list.keys()):
-                state = self.notify_list.pop(p)
+                with self._lock:
+                    state = self.notify_list.pop(p)
                 state.notify(self)
 
         self.save()
@@ -101,18 +121,22 @@ class MemoryState:
                 name = ensure_key(name)
                 path = self.get_subpath(name)
 
-            return path in self.complete_list
+            with self._lock:
+                return path in self.complete_list
         else:
-            return self._complete
+            with self._lock:
+                return self._complete
 
     def is_waiting(self, state):
-        return state.path in self.wait_list
+        with self._lock:
+            return state.path in self.wait_list
 
     def _create_memory_instance(self, name):
         return MemoryState(name=name, parent=self)
 
     def _create_substate(self, path, wait=True, notify=True):
-        state = self.wait_list.get(path, None)
+        with self._lock:
+            state = self.wait_list.get(path, None)
 
         if state is None:
             state = self._create_memory_instance(path[-1])
@@ -128,20 +152,25 @@ class MemoryState:
         assert name or suffix
 
         if name is None:
-            key = 'step{i}:{suffix}'.format(suffix=suffix, i=self._running_number)
-            self._running_number += 1
+            with self._lock:
+                key = 'step{i}:{suffix}'.format(suffix=suffix, i=self._running_number)
+                self._running_number += 1
         else:
             key = ensure_key(name)
 
         path = self.get_subpath(key)
 
+        self._lock.acquire()
         assert path not in self.notify_list
 
         if path in self.complete_list:
             ss = self.complete_list[path]
+            self._lock.release()
         elif path in self.wait_list:
             ss = self.wait_list[path]
+            self._lock.release()
         else:
+            self._lock.release()
             ss = self._create_substate(path)
 
         return ss
@@ -150,11 +179,11 @@ class MemoryState:
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
-        if not exc_type and not self._complete:
+        if not exc_type and not self.is_complete():
             self.complete()
 
     def iter(self, it, if_exists='skip', key=None):
-        if self._complete:
+        if self.is_complete():
             return
 
         if_exists = if_exists.lower().strip()

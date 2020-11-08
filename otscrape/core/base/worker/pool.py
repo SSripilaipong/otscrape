@@ -82,7 +82,8 @@ class PoolCommand:
         raise NotImplementedError()
 
     def callback(self, x):
-        result = PageWrapper(x, state=self.state.substate(x))
+        ss = self.state.substate(x) if self.state else None
+        result = PageWrapper(x, state=ss)
         return result
 
     def finish(self, pages, *args, **kwargs):

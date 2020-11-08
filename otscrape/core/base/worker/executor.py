@@ -122,6 +122,8 @@ class CommandExecutor:
         pages = ensure_page_iter(page)
 
         pages_ = []
+        if state:
+            state.hold()
         for page_ in pages:
             if state:
                 if state.is_complete(name=page_):
@@ -137,6 +139,9 @@ class CommandExecutor:
 
             self.push_event.set()
             pages_.append(page_)
+
+        if state:
+            state.release()
 
         return command.finish(pages_, *args, **kwargs)
 

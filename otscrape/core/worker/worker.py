@@ -1,3 +1,4 @@
+from typing import Union
 from otscrape.core.base.state import MemoryState
 from otscrape.core.base.exception import StateOnWaitingException
 from otscrape.core.base.worker import WorkersBase
@@ -34,14 +35,20 @@ class StatefulList:
 
 class Workers(WorkersBase):
     def scrape(self, page, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
-        state = self.current_state.substate(suffix='scrape')  # type: MemoryState
+        if self.current_state:
+            state = self.current_state.substate(suffix='scrape')  # type: Union[MemoryState, None]
+        else:
+            state = None
         command = ScrapeCommand(self, buffer, buffer_size, buffer_timeout, state=state)
         return self._executor.execute(command, page, state=state)
 
     def export(self, page, exporter, **kwargs):
-        state = self.current_state.substate(suffix='export')  # type: MemoryState
+        if self.current_state:
+            state = self.current_state.substate(suffix='export')  # type: Union[MemoryState, None]
+        else:
+            state = None
         command = ExportCommand(exporter, self._exporter_cache, state=state, **kwargs)
-        return self._executor.execute(command, page)
+        return self._executor.execute(command, page, state=state)
 
     def list(self, elements=None):
         elements = elements or ()
