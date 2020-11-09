@@ -5,10 +5,17 @@ from otscrape.core.base.wrapper import PageWrapper
 
 
 def ensure_n_workers(n_workers):
-    if n_workers == -1 or n_workers is None:
-        n_workers = multiprocessing.cpu_count()
-    else:
-        assert 0 < n_workers < multiprocessing.cpu_count()
+    if n_workers is None:
+        if multiprocessing.cpu_count() == 1:
+            n_workers = 1
+        else:
+            n_workers = -1
+
+    if n_workers < 0:
+        n_workers = multiprocessing.cpu_count() - n_workers
+
+    assert isinstance(n_workers, int) and 0 < n_workers
+
     return n_workers
 
 

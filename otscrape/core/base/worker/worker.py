@@ -27,7 +27,7 @@ def get_state(state, replace=False):
 
 
 class WorkersBase:
-    def __init__(self, n_workers, state=None, restart=False):
+    def __init__(self, n_workers=None, state=None, restart=False):
         self._exporter_cache = {}
         self._executor = CommandExecutor(n_workers)
 
