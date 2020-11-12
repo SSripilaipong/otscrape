@@ -11,4 +11,4 @@ from otscrape.core.exporter import JSONExporter
 
 from otscrape.core.worker import Workers
 
-from otscrape.core.pandas import PageSeries, PageDataFrame, to_dataframe
+from otscrape.core.pandas import scrape_pandas

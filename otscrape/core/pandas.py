@@ -1,4 +1,4 @@
-import inspect
+from typing import Union, Iterable
 
 import pandas as pd
 from pandas import DataFrame, Series
@@ -7,88 +7,51 @@ from otscrape.core.base.page import Page
 from otscrape.core.worker import Workers
 
 
-def pd_override(parent):
-    def dec(cls):
-        def wrap(m):
-            def f(*args, **kwargs):
-                r = m(*args, **kwargs)
-                if isinstance(r, DataFrame):
-                    r = PageDataFrame(r)
-                elif isinstance(r, Series):
-                    r = PageSeries(r)
-                return r
-            return f
+def scrape_series(ss):
+    if not ss.apply(lambda t: isinstance(t, Page) or pd.isnull(t)).all():
+        raise ValueError('Values must be of type Page.')
 
-        for name, method in inspect.getmembers(parent, predicate=inspect.isfunction):
-            setattr(cls, name, wrap(method))
+    nonull = ss.dropna()
 
-        return cls
-    return dec
+    with Workers() as w:
+        buffer = w.scrape(nonull)
+        data = [d.get_data() for d in buffer]
+
+    df = DataFrame(data)
+    df.index = nonull.index
+    df = df.reindex(ss.index)
+
+    return df
 
 
-@pd_override(DataFrame)
-class PageDataFrame(DataFrame):
-    def expand(self, column, prefix=None, inplace=False):
-        if not isinstance(self[column], PageSeries):
-            raise TypeError(f'Column {column} needs to be of type PageSeries.')
+def scrape_pandas(data: Union[Series, DataFrame], column=None, full=False, drop=False, prefix=None, suffix=None):
+    if isinstance(data, Series):
+        return scrape_series(data)
 
-        d = self[column].expand()
+    elif isinstance(data, DataFrame):
+        assert column is not None
 
-        if not prefix:
-            prefix = column + '.'
+        ss = data[column]
+        if len(ss.shape) > 1:
+            raise ValueError(f'Columns named "{column}" is duplicated.')
 
-        r = self._concat_or_return(d, prefix, inplace)
-        if inplace:
-            self.drop(columns=[column], inplace=True)
-        else:
-            return r.drop(columns=[column])
+        ext = scrape_series(ss)
 
-    def explode_json(self, column, prefix=None, inplace=False):
-        d = pd.json_normalize(self[column])
+        if full:
+            prefix = prefix or column + '.'
+            suffix = suffix or ''
+            ext.columns = prefix + ext.columns + suffix
 
-        if not prefix:
-            prefix = column + '.'
+            if drop:
+                data = data.drop(columns=[column])
+            return pd.concat([data, ext], axis=1)
 
-        r = self._concat_or_return(d, prefix, inplace)
-        if inplace:
-            self.drop(columns=[column], inplace=True)
-        else:
-            return r.drop(columns=[column])
+        prefix = prefix or ''
+        suffix = suffix or ''
+        ext.columns = prefix + ext.columns + suffix
+        return ext
 
-    def _concat_or_return(self, d, prefix, inplace):
-        t = self if inplace else self.copy()
+    elif isinstance(data, Iterable):
+        return scrape_series(pd.Series([x for x in data]))
 
-        for c in d.columns:
-            t[prefix + c] = d[c]
-
-        if not inplace:
-            return t
-
-
-@pd_override(Series)
-class PageSeries(Series):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _check_datatypes(self):
-        if not self.apply(lambda t: isinstance(t, Page) or pd.isnull(t)).all():
-            raise ValueError('Values must be of type Page.')
-
-    def expand(self):
-        self._check_datatypes()
-
-        nonull = self.dropna()
-
-        with Workers() as w:
-            buffer = w.scrape(nonull)
-            data = [d.get_data() for d in buffer]
-
-        df = PageDataFrame(data)
-        df.index = nonull.index
-        df = df.reindex(self.index)
-
-        return df
-
-
-def to_dataframe(pages):
-    return PageSeries(pages).expand()
+    raise TypeError(f'Type of data must be one of Pandas\'s data structures or Iterable')
