@@ -4,12 +4,12 @@ from threading import Lock
 from typing import Dict, Set, Any, List, Tuple
 import pickle
 
-from .page.page import Page
+from .page.page import PageBase
 from otscrape.core.base.exception import StateOnWaitingException
 
 
 def ensure_key(key):
-    if isinstance(key, Page):
+    if isinstance(key, PageBase):
         if not hasattr(key, 'key'):
             raise ValueError(f'Attribute named "key" is required in Page {key.__class__.__name__} to use State.')
         key = key['key']

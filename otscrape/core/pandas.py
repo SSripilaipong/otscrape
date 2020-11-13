@@ -3,12 +3,12 @@ from typing import Union, Iterable
 import pandas as pd
 from pandas import DataFrame, Series
 
-from otscrape.core.base.page import Page
+from otscrape.core.base.page import PageBase
 from otscrape.core.worker import Workers
 
 
 def scrape_series(ss):
-    if not ss.apply(lambda t: isinstance(t, Page) or pd.isnull(t)).all():
+    if not ss.apply(lambda t: isinstance(t, PageBase) or pd.isnull(t)).all():
         raise ValueError('Values must be of type Page.')
 
     nonull = ss.dropna()

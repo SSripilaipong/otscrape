@@ -1,7 +1,7 @@
 import re
 from urllib.parse import urlparse
 
-from otscrape.core.base.page import Page
+from otscrape.core.base.page import PageBase
 from otscrape.core.base.worker import PoolCommand
 from otscrape.core.base.exporter import Exporter
 
@@ -66,7 +66,7 @@ class ExportCommand(PoolCommand):
         self.exporter = exporter
 
     @staticmethod
-    def calculate(page: Page):
+    def calculate(page: PageBase):
         page.do_load()
         page.get_data()
         page.prune()

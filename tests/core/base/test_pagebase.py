@@ -1,8 +1,8 @@
-from otscrape import Page, Attribute, DummyLoader, Extractor
+from otscrape import PageBase, Attribute, DummyLoader, Extractor
 
 
 def test_attribute():
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = ...
         a = Attribute()
 
@@ -11,15 +11,15 @@ def test_attribute():
 
             self['a'] = 1234
 
-    page = TestPage()
+    page = TestPageBase()
     assert page['a'] == 1234
 
 
 def test_loader():
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('abcd')
 
-    page = TestPage()
+    page = TestPageBase()
     assert page['raw'] == 'abcd'
 
 
@@ -28,12 +28,12 @@ def test_extractor_class():
         def extract(self, page):
             return page[self.target][0]
 
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('abcd')
 
         first = FirstChar()
 
-    p = TestPage()
+    p = TestPageBase()
 
     assert p['first'] == 'a'
 
@@ -47,13 +47,13 @@ def test_get_data():
         def extract(self, page):
             return page[self.target][0]
 
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('    abcd')
 
         strip = Strip()
         first = FirstChar(strip)
 
-    p = TestPage()
+    p = TestPageBase()
 
     assert p.get_data() == {'strip': 'abcd', 'first': 'a'}
 
@@ -67,13 +67,13 @@ def test_get_data_no_project():
         def extract(self, page):
             return page[self.target][0]
 
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('    abcd')
 
         strip = Strip(project=False)
         first = FirstChar(strip)
 
-    p = TestPage()
+    p = TestPageBase()
 
     assert p.get_data() == {'first': 'a'}
 
@@ -83,12 +83,12 @@ def test_extractor_error():
         def extract(self, page):
             raise Exception()
 
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('abcd')
 
         first = FirstChar()
 
-    p = TestPage()
+    p = TestPageBase()
 
     assert p['first'] is None
 
@@ -98,12 +98,12 @@ def test_extractor_error_default_value():
         def extract(self, page):
             raise Exception()
 
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('abcd')
 
         first = FirstChar(replace_error='999')
 
-    p = TestPage()
+    p = TestPageBase()
 
     assert p['first'] == '999'
 
@@ -117,12 +117,12 @@ def test_serial_extractor():
         def extract(self, page):
             return page[self.target][0]
 
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('    abcd')
 
         strip = Strip()
         first = FirstChar(strip)
 
-    p = TestPage()
+    p = TestPageBase()
 
     assert p['first'] == 'a'

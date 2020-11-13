@@ -5,7 +5,7 @@ from otscrape.core.extractor import Raw, RequestText, RequestStatusCode, JSON, D
 
 from otscrape.core.loader import SimpleRequestLoader, DummyLoader
 
-from otscrape.core.base.page import Page
+from otscrape.core.base.page import PageBase
 
 from otscrape.core.exporter import JSONExporter
 

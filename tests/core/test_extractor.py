@@ -1,10 +1,10 @@
-from otscrape import Page, Raw, DummyLoader
+from otscrape import PageBase, Raw, DummyLoader
 
 
 def test_Raw():
-    class TestPage(Page):
+    class TestPageBase(PageBase):
         loader = DummyLoader('abcd')
         raw_project = Raw()
 
-    p = TestPage()
+    p = TestPageBase()
     assert p.get_data() == {'raw_project': 'abcd'}

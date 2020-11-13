@@ -5,7 +5,7 @@ from otscrape.core.base.extractor import extractor
 from otscrape.core.base.loader import Loader
 
 
-class Page(DataModel):
+class PageBase(DataModel):
     def __init__(self, **kwargs):
         super().__init__()
 
