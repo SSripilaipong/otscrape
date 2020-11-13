@@ -10,7 +10,7 @@ class ZipDict(Extractor):
         assert structure and all(isinstance(x, (str, ExtractorBase)) for x in structure.values())
         self.structure = structure
 
-    def extract(self, page):
+    def extract(self, page, cache):
         iter_dict = {}
         for key, value in self.structure.items():
             if isinstance(page[value], Iterable):

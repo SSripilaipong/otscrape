@@ -22,23 +22,23 @@ class JSON(Extractor):
 
         self._parsers = [(c, p(target, ** self._kwargs)) for c, p in parsers]
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
         cache_name = f'{target}#JSON'
 
-        if cache_name in page._cached:
-            y = page._cached[cache_name]
+        if cache_name in cache:
+            y = cache[cache_name]
         else:
             x = page[target]
 
             for c, p in self._parsers:
                 if isinstance(x, c):
-                    y = p.extract(page)
+                    y = p.extract(page, None)
                     break
             else:
                 raise TypeError(f'Unexpected type {x.__class__.__name__} for a JSON attribute.')
 
-            page._cached[cache_name] = y
+            cache[cache_name] = y
 
         item = get_item_from_path(y, self.path)
         return item

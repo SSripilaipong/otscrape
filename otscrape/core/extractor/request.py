@@ -9,7 +9,7 @@ class RequestText(Extractor):
         self.bytes_result = bytes_result
         self.encoding = encoding
 
-    def extract(self, page):
+    def extract(self, page, cache):
         x = page[self.target]
         assert isinstance(x, Response)
 
@@ -23,7 +23,7 @@ class RequestText(Extractor):
 
 class RequestStatusCode(Extractor):
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
         assert isinstance(page[target], Response)
 
@@ -32,7 +32,7 @@ class RequestStatusCode(Extractor):
 
 class RequestJSON(Extractor):
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
         assert isinstance(page[target], Response)
 

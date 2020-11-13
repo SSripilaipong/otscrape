@@ -10,7 +10,7 @@ class JSONDict(Extractor):
         self.encoding = encoding
         self.kwargs = kwargs
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
         assert isinstance(page[target], (str, bytes))
 

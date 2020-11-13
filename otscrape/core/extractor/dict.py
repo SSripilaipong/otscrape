@@ -33,7 +33,7 @@ class DictPath(Extractor):
 
         self.path = path
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
         item = get_item_from_path(page[target], self.path)
         return item

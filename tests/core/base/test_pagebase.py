@@ -41,7 +41,7 @@ def test_load_once(mocker):
 
 def test_extractor_class():
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target][0]
 
     class TestPageBase(PageBase):
@@ -70,12 +70,12 @@ def test_extract_once(mocker):
     _ = p['first']
     _ = p['first']
 
-    extract_mock.assert_called_once_with(p)
+    extract_mock.assert_called_once_with(p, p._cached)
 
 
 def test_indefinite_extractor():
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target][0]
 
     class TestPageBase(PageBase):
@@ -88,11 +88,11 @@ def test_indefinite_extractor():
 
 def test_get_data():
     class Strip(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target].strip()
 
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target][0]
 
     class TestPageBase(PageBase):
@@ -108,11 +108,11 @@ def test_get_data():
 
 def test_get_data_no_project():
     class Strip(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target].strip()
 
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target][0]
 
     class TestPageBase(PageBase):
@@ -128,7 +128,7 @@ def test_get_data_no_project():
 
 def test_extractor_error():
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             raise Exception()
 
     class TestPageBase(PageBase):
@@ -143,7 +143,7 @@ def test_extractor_error():
 
 def test_extractor_error_default_value():
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             raise Exception()
 
     class TestPageBase(PageBase):
@@ -158,11 +158,11 @@ def test_extractor_error_default_value():
 
 def test_serial_extractor():
     class Strip(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target].strip()
 
     class FirstChar(Extractor):
-        def extract(self, page):
+        def extract(self, page, cache):
             return page[self.target][0]
 
     class TestPageBase(PageBase):

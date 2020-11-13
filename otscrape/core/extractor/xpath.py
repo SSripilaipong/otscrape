@@ -13,22 +13,22 @@ class XPath(Extractor):
         self.only_first = only_first
         self._req_parser = RequestText(target, encoding=encoding)
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
         x = page[target]
 
         if isinstance(x, Response):
-            x = self._req_parser.extract(page)
+            x = self._req_parser.extract(page, None)
         elif not isinstance(x, (str, bytes)):
             raise TypeError(f'Unexpected type {x.__class__.__name__} for a XPath attribute.')
 
         cache_name = f'{target}#ETree'
 
-        if cache_name in page._cached:
-            tree = page._cached[cache_name]
+        if cache_name in cache:
+            tree = cache[cache_name]
         else:
             tree = parse(x)
-            page._cached[cache_name] = tree
+            cache[cache_name] = tree
 
         result = tree.xpath(self.xpath)
         if self.only_first:

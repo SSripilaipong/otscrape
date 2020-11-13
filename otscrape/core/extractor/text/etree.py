@@ -8,7 +8,7 @@ def parse(text):
 
 
 class ETree(Extractor):
-    def extract(self, page):
+    def extract(self, page, cache):
         x = page[self.target]
         assert isinstance(x, (str, bytes))
 

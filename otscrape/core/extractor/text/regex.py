@@ -45,12 +45,12 @@ class RegEx(Extractor):
         self.pattern = re.compile(pattern, self.flags)
         self.kwargs = kwargs
 
-    def extract(self, page):
+    def extract(self, page, cache):
         target = self.target
 
         value = page[target]
         if isinstance(value, Response):
-            value = RequestText(target=target).extract(page)
+            value = RequestText(target=target).extract(page, None)
 
         assert isinstance(value, str)
         return self._extract_str(value)

@@ -1,3 +1,4 @@
+from inspect import signature
 from .abstract import WillFail, NoFailMixin
 
 
@@ -10,9 +11,9 @@ class ExtractorBase(WillFail):
         return self._run_will_fail(page)
 
     def _run(self, page):
-        return self.extract(page)
+        return self.extract(page, page._cached)
 
-    def extract(self, page):
+    def extract(self, page, cache):
         raise NotImplementedError()
 
 
@@ -31,16 +32,23 @@ class Extractor(NoFailMixin, ExtractorBase):
 
 
 def extractor(func=None, *, project=True, replace_error=None):
-    if func:
+    def dec(f):
         x = Extractor(project=project, replace_error=replace_error)
-        x.extract = func
+
+        sig = signature(f)
+        params = sig.parameters
+        if len(params) == 1:
+            x.extract = lambda page, _: f(page)
+        elif len(params) > 1:
+            x.extract = f
+        else:
+            raise TypeError(f'Extractor method must have at least one parameter.')
+
         return x
 
-    def func_(f):
-        x_ = Extractor(project=project, replace_error=replace_error)
-        x_.extract = f
-        return x_
-    return func_
+    if func:
+        return dec(func)
+    return dec
 
 
 class Attribute(Extractor):
