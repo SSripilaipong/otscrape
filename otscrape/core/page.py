@@ -8,12 +8,13 @@ def get_page_meta(loader_cls):
         def __new__(mcs, name, bases, dct):
             dct_new = {}
             loader_params = {}
-            loader_prefix = '_loader_'
+            loader_prefix = '_loader__'
             for key, value in dct.items():
                 assert key != 'loader'
 
                 if key.startswith(loader_prefix):
-                    loader_params[len(loader_prefix):] = value
+                    name = key[len(loader_prefix):]
+                    loader_params[name] = value
                 else:
                     dct_new[key] = value
 
