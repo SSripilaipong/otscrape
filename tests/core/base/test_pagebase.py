@@ -23,6 +23,22 @@ def test_loader():
     assert page['raw'] == 'abcd'
 
 
+def test_load_once(mocker):
+    loader_mock = mocker.Mock()
+    loader_mock.do_load = mocker.Mock(return_value='abcd')
+    loader_mock.get_available_time = mocker.Mock(return_value=0)
+
+    class TestPageBase(PageBase):
+        loader = loader_mock
+
+    p = TestPageBase()
+
+    _ = p['raw']
+    _ = p['raw']
+
+    loader_mock.do_load.assert_called_once()
+
+
 def test_extractor_class():
     class FirstChar(Extractor):
         def extract(self, page):
@@ -36,6 +52,38 @@ def test_extractor_class():
     p = TestPageBase()
 
     assert p['first'] == 'a'
+
+
+def test_extract_once(mocker):
+    extract_mock = mocker.Mock(return_value='a')
+
+    class FirstChar(Extractor):
+        extract = extract_mock
+
+    class TestPageBase(PageBase):
+        loader = DummyLoader('abcd')
+
+        first = FirstChar()
+
+    p = TestPageBase()
+
+    _ = p['first']
+    _ = p['first']
+
+    extract_mock.assert_called_once_with(p)
+
+
+def test_indefinite_extractor():
+    class FirstChar(Extractor):
+        def extract(self, page):
+            return page[self.target][0]
+
+    class TestPageBase(PageBase):
+        loader = DummyLoader('abcd')
+
+    p = TestPageBase()
+
+    assert p[FirstChar()] == 'a'
 
 
 def test_get_data():
