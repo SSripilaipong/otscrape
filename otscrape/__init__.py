@@ -1,7 +1,7 @@
-from otscrape.core.base.attribute import attribute, Attribute
+from otscrape.core.base.extractor import extractor, Attribute
 from otscrape.core.base.state import PickleState
 
-from otscrape.core.attribute import RequestText, RequestStatusCode, JSON, DictPath, XPath, ZipDict, RegEx
+from otscrape.core.extractor import RequestText, RequestStatusCode, JSON, DictPath, XPath, ZipDict, RegEx
 
 from otscrape.core.loader import SimpleRequestLoader, DummyLoader
 

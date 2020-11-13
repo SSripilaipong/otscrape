@@ -1,8 +1,8 @@
 from requests import Response
 import re
 
-from otscrape.core.base.attribute import Attribute
-from otscrape.core.attribute.request import RequestText
+from otscrape.core.base.extractor import Extractor
+from otscrape.core.extractor.request import RequestText
 
 
 flag_table = (
@@ -36,7 +36,7 @@ def get_flags(flags):
     return flags
 
 
-class RegEx(Attribute):
+class RegEx(Extractor):
     def __init__(self, pattern, flags='', multiple=False, target=None, *, project=True, replace_error=None, **kwargs):
         super().__init__(target=target, project=project, replace_error=replace_error)
 

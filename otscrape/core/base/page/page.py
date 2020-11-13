@@ -1,7 +1,7 @@
 import time
 
 from otscrape.core.base.data_model import DataModel
-from otscrape.core.base.attribute import attribute
+from otscrape.core.base.extractor import extractor
 from otscrape.core.base.loader import Loader
 
 
@@ -21,7 +21,7 @@ class Page(DataModel):
     def loader(self) -> Loader:
         raise NotImplementedError()
 
-    @attribute(project=False)
+    @extractor(project=False)
     def raw(self):
         return self.fetch()
 

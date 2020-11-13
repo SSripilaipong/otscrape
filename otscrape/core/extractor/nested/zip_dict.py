@@ -1,13 +1,13 @@
 from typing import Iterator, Iterable
 
-from otscrape.core.base.attribute import AttributeBase, Attribute
+from otscrape.core.base.extractor import ExtractorBase, Extractor
 
 
-class ZipDict(Attribute):
+class ZipDict(Extractor):
     def __init__(self, structure=None, *, project=True, replace_error=None):
         super().__init__(target=None, project=project, replace_error=replace_error)
 
-        assert structure and all(isinstance(x, (str, AttributeBase)) for x in structure.values())
+        assert structure and all(isinstance(x, (str, ExtractorBase)) for x in structure.values())
         self.structure = structure
 
     def extract(self, page):

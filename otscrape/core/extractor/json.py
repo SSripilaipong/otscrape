@@ -1,6 +1,6 @@
 from requests import Response
 
-from otscrape.core.base.attribute import Attribute
+from otscrape.core.base.extractor import Extractor
 
 from .request import RequestJSON
 from .text.json import JSONDict
@@ -13,7 +13,7 @@ parsers = [
 ]
 
 
-class JSON(Attribute):
+class JSON(Extractor):
     def __init__(self, target=None, path='/', *, project=True, replace_error=None, **kwargs):
         super().__init__(target=target, project=project, replace_error=replace_error)
 

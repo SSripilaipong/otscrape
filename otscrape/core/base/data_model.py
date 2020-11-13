@@ -1,4 +1,4 @@
-from .attribute import AttributeBase, Attribute
+from .extractor import ExtractorBase, Attribute
 
 
 class DataModelMeta(type):
@@ -9,7 +9,7 @@ class DataModelMeta(type):
 
         # add attributes
         for obj_name, obj in dct.items():
-            if isinstance(obj, AttributeBase):
+            if isinstance(obj, ExtractorBase):
                 attr_ids[id(obj)] = obj_name
                 attrs[obj_name] = obj
                 if getattr(obj, 'do_project', False):
@@ -67,7 +67,7 @@ class DataModel(metaclass=DataModelMeta):
             self._attr_cached[key] = value
 
     def __getitem__(self, key):
-        if isinstance(key, AttributeBase):
+        if isinstance(key, ExtractorBase):
             id_ = id(key)
             if id_ not in self._attribute_ids:
                 return key(self)
@@ -77,6 +77,6 @@ class DataModel(metaclass=DataModelMeta):
         elif isinstance(key, str):
             name = key
         else:
-            raise TypeError(f'attribute {key} should be of type str or AttributeBase')
+            raise TypeError(f'Attribute {key} should be of type str or ExtractorBase')
 
         return self._get_or_compute_attr(name)

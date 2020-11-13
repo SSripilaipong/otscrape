@@ -1,5 +1,5 @@
 from lxml import etree
-from otscrape.core.base.attribute import Attribute
+from otscrape.core.base.extractor import Extractor
 
 
 def parse(text):
@@ -7,7 +7,7 @@ def parse(text):
     return tree
 
 
-class ETree(Attribute):
+class ETree(Extractor):
     def extract(self, page):
         x = page[self.target]
         assert isinstance(x, (str, bytes))

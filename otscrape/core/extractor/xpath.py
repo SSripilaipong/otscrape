@@ -1,11 +1,11 @@
 from requests import Response
 
-from otscrape.core.base.attribute import Attribute
+from otscrape.core.base.extractor import Extractor
 from .text.etree import parse
 from .request import RequestText
 
 
-class XPath(Attribute):
+class XPath(Extractor):
     def __init__(self, target=None, xpath='.', *, only_first=False, encoding=None, project=True, replace_error=None):
         super().__init__(target=target, project=project, replace_error=replace_error)
 

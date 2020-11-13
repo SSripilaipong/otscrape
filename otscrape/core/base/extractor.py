@@ -1,7 +1,7 @@
 from .abstract import WillFail, NoFailMixin
 
 
-class AttributeBase(WillFail):
+class ExtractorBase(WillFail):
     def __init__(self, target=None, project=True):
         self.target = target or 'raw'
         self.do_project = project
@@ -16,7 +16,7 @@ class AttributeBase(WillFail):
         raise NotImplementedError()
 
 
-class Attribute(NoFailMixin, AttributeBase):
+class Extractor(NoFailMixin, ExtractorBase):
     def __init__(self, target=None, project=True, replace_error=None):
         super().__init__(target=target, project=project)
         self.replace_error = replace_error
@@ -30,14 +30,18 @@ class Attribute(NoFailMixin, AttributeBase):
         return super().on_error(*args, message=message, **kwargs)
 
 
-def attribute(func=None, *, project=True, replace_error=None):
+def extractor(func=None, *, project=True, replace_error=None):
     if func:
-        x = Attribute(project=project, replace_error=replace_error)
+        x = Extractor(project=project, replace_error=replace_error)
         x.extract = func
         return x
 
     def func_(f):
-        x_ = Attribute(project=project, replace_error=replace_error)
+        x_ = Extractor(project=project, replace_error=replace_error)
         x_.extract = f
         return x_
     return func_
+
+
+class Attribute(Extractor):
+    pass

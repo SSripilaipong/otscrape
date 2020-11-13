@@ -1,9 +1,9 @@
 import json
 
-from otscrape.core.base.attribute import Attribute
+from otscrape.core.base.extractor import Extractor
 
 
-class JSONDict(Attribute):
+class JSONDict(Extractor):
     def __init__(self, target=None, *, encoding=None, project=True, replace_error=None, **kwargs):
         super().__init__(target=target, project=project, replace_error=replace_error)
 

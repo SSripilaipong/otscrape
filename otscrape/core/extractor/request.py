@@ -1,8 +1,8 @@
 from requests import Response
-from otscrape.core.base.attribute import Attribute
+from otscrape.core.base.extractor import Extractor
 
 
-class RequestText(Attribute):
+class RequestText(Extractor):
     def __init__(self, target=None, *, bytes_result=False, encoding=None, project=True, replace_error=None):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
@@ -21,7 +21,7 @@ class RequestText(Attribute):
         return x.text
 
 
-class RequestStatusCode(Attribute):
+class RequestStatusCode(Extractor):
 
     def extract(self, page):
         target = self.target
@@ -30,7 +30,7 @@ class RequestStatusCode(Attribute):
         return page[target].status_code
 
 
-class RequestJSON(Attribute):
+class RequestJSON(Extractor):
 
     def extract(self, page):
         target = self.target

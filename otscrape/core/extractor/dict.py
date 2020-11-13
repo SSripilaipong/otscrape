@@ -1,6 +1,6 @@
 import re
 
-from otscrape.core.base.attribute import Attribute
+from otscrape.core.base.extractor import Extractor
 
 
 key_pattern = re.compile(r'^[a-zA-Z_]+$')
@@ -27,7 +27,7 @@ def get_item_from_path(d, path):
     return d
 
 
-class DictPath(Attribute):
+class DictPath(Extractor):
     def __init__(self, target=None, path='/', *, project=True, replace_error=None):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
