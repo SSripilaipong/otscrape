@@ -1,5 +1,5 @@
 import os
-from collections import Hashable
+from collections.abc import Hashable
 from threading import Lock
 from typing import Dict, Set, Any, List, Tuple
 import pickle
