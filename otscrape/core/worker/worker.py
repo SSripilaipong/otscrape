@@ -1,6 +1,5 @@
 from typing import Union
 from otscrape.core.base.state import MemoryState
-from otscrape.core.base.exception import StateOnWaitingException
 from otscrape.core.base.worker import WorkersBase
 
 from .command import ScrapeCommand, ExportCommand

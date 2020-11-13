@@ -1,5 +1,3 @@
-from typing import List
-
 from otscrape.core.base.state import MemoryState
 
 from .page import PageBase
