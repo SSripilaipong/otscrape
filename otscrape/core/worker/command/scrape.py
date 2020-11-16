@@ -1,7 +1,7 @@
 from otscrape.core.base.worker import PoolCommand
 from otscrape.core.base.buffer import Buffer
 
-from otscrape.core.buffer import FIFOBufferBase, LIFOBufferBase
+from otscrape.core.buffer import FIFOBufferBase, LIFOBufferBase, OrderedBuffer
 
 
 def get_buffer(workers, type_, buffer_size, buffer_timeout):
@@ -13,6 +13,8 @@ def get_buffer(workers, type_, buffer_size, buffer_timeout):
             return FIFOBufferBase(workers, buffer_size=buffer_size, buffer_timeout=buffer_timeout)
         elif type_ == 'lifo':
             return LIFOBufferBase(workers, buffer_size=buffer_size, buffer_timeout=buffer_timeout)
+        elif type_ == 'order':
+            return OrderedBuffer(workers, buffer_size=buffer_size, buffer_timeout=buffer_timeout)
         else:
             raise NotImplementedError(f'A buffer of type {type_} is not implemented.')
     else:
@@ -24,9 +26,6 @@ class ScrapeCommand(PoolCommand):
         super().__init__(state=state)
 
         self.buffer = get_buffer(workers, buffer, buffer_size, buffer_timeout)
-
-    def prepare(self, page):
-        super().prepare(page)
 
     @staticmethod
     def calculate(page):

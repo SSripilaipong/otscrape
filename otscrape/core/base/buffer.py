@@ -70,6 +70,15 @@ class Buffer:
             self.task_done()
             yield obj
 
+        if not self.empty():
+            try:
+                obj = self.get()
+
+                self.task_done()
+                yield obj
+            except BufferRetryException:
+                pass
+
     def __iter__(self):
         if not self.workers.current_state:
             for obj in self._iter():

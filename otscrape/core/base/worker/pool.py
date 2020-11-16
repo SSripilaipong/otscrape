@@ -89,27 +89,39 @@ class PoolCommand:
         raise NotImplementedError()
 
     def callback(self, x):
-        ss = self.state.substate(x) if self.state else None
-        result = PageWrapper(x, state=ss)
+        order, page = x
+        ss = self.state.substate(page) if self.state else None
+        result = PageWrapper(page, order, state=ss)
         return result
 
     def finish(self, pages, *args, **kwargs):
         return
 
-    def create_task(self, page):
-        task = PoolTask(self, page)
+    def create_task(self, page, order):
+        task = PoolTask(self, page, order)
         return task
 
 
 class PoolTask:
-    def __init__(self, command: PoolCommand, page):
-        self.command = command
+    def __init__(self, command: PoolCommand, page, order):
         self.page = page
+        self.order = order
 
-        self.command.validate_input(self.page)
+        command.validate_input(self.page)
 
-        self.calculation = command.calculate
+        self.calculation = PoolTaskCalculation(self.order, command.calculate).calculation
+        self.command_prepare = command.prepare
         self.callback = command.callback
 
     def prepare(self):
-        return self.command.prepare(self.page)
+        return self.command_prepare(self.page)
+
+
+class PoolTaskCalculation:
+    def __init__(self, order, command_calculate):
+        self.order = order
+        self.command_calculate = command_calculate
+
+    def calculation(self, x):
+        r = self.command_calculate(x)
+        return self.order, r
