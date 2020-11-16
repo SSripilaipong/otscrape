@@ -1,6 +1,7 @@
 from otscrape.core.base.data_model import DataModelMeta
 from otscrape.core.base.page import PageBase
 from otscrape.core.loader.request import SimpleRequestLoader
+from otscrape.core.loader import DummyLoader
 
 
 def get_page_meta(loader_cls):
@@ -28,3 +29,10 @@ def get_page_meta(loader_cls):
 
 class Page(PageBase, metaclass=get_page_meta(SimpleRequestLoader)):
     pass
+
+
+class DummyPage(PageBase):
+    loader = DummyLoader()
+
+    def __init__(self, data):
+        super().__init__(data=data)
