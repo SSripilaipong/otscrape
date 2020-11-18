@@ -34,10 +34,10 @@ class ScrapeCommand(PoolCommand):
         page.prune()
         return page
 
-    def callback(self, x):
-        result = super().callback(x)
+    def callback(self, *args):
+        result = super().callback(*args)
 
-        self.buffer.put(result)
+        self.buffer.put(result)  # let the buffer handle if an exception exists
         self.buffer.increase_task_counter()
 
     def finish(self, pages, *args, **kwargs):

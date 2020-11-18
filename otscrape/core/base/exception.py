@@ -6,6 +6,14 @@ class LoaderNotAvailableException(Exception):
     pass
 
 
+class LoadingFailedException(Exception):
+    pass
+
+
+class PoolWorkerFailedException(Exception):
+    pass
+
+
 class FatalException(Exception):
     pass
 

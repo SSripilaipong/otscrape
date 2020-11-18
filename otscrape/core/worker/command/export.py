@@ -1,9 +1,11 @@
+import traceback
 import re
 from urllib.parse import urlparse
 
 from otscrape.core.base.page import PageBase
 from otscrape.core.base.worker import PoolCommand
 from otscrape.core.base.exporter import Exporter
+from otscrape.core.base.exception import LoadingFailedException
 
 from otscrape.core.exporter import JSONExporter
 
@@ -72,10 +74,12 @@ class ExportCommand(PoolCommand):
         page.prune()
         return page
 
-    def callback(self, x):
-        result = super().callback(x)
+    def callback(self, *args):
+        result = super().callback(*args)
 
-        self.exporter(result.page)
+        exception = result.exception
+        if not exception:
+            self.exporter(result.page)
 
         if result.state:
             result.state.try_complete()

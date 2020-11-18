@@ -1,7 +1,9 @@
+import traceback
 import multiprocessing
 from multiprocessing import Pool, Value, Event
 
 from otscrape.core.base.wrapper import PageWrapper
+from otscrape.core.base.exception import PoolWorkerFailedException
 
 
 def ensure_n_workers(n_workers):
@@ -88,10 +90,18 @@ class PoolCommand:
     def calculate(page):
         raise NotImplementedError()
 
-    def callback(self, x):
-        order, page = x
+    def callback(self, order, page, exception):
         ss = self.state.substate(page) if self.state else None
-        result = PageWrapper(page, order, state=ss)
+        result = PageWrapper(page, order, state=ss, exception=exception)
+
+        exception = result.exception
+        if exception:
+            traceback.print_exception(type(exception), exception, exception.__traceback__)
+
+            message = f'Page {page} (key: {page["key"]!r}) was not processed successfully.'
+            exception = PoolWorkerFailedException(message)
+            traceback.print_exception(type(exception), exception, None)
+
         return result
 
     def finish(self, pages, *args, **kwargs):
@@ -123,5 +133,11 @@ class PoolTaskCalculation:
         self.command_calculate = command_calculate
 
     def calculation(self, x):
-        r = self.command_calculate(x)
-        return self.order, r
+        exception = None
+
+        try:
+            x = self.command_calculate(x)
+        except Exception as e:
+            exception = e
+
+        return self.order, x, exception

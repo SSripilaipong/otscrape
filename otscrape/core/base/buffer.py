@@ -1,6 +1,5 @@
 from threading import Lock
 
-from otscrape.core.util import ensure_dict
 from otscrape.core.base.wrapper import PageWrapper
 
 
@@ -60,6 +59,10 @@ class Buffer:
     def task_done(self):
         pass
 
+    @staticmethod
+    def _iter_filter(obj):
+        return not obj.exception
+
     def _iter(self):
         while not self.empty() or self.count_remaining_tasks():
             try:
@@ -68,14 +71,17 @@ class Buffer:
                 continue
 
             self.task_done()
-            yield obj
+
+            if self._iter_filter(obj):
+                yield obj
 
         if not self.empty():
             try:
                 obj = self.get()
-
                 self.task_done()
-                yield obj
+
+                if self._iter_filter(obj):
+                    yield obj
             except BufferRetryException:
                 pass
 

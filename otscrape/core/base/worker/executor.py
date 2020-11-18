@@ -157,8 +157,8 @@ class CommandExecutor:
         self.done_event.set()
 
     def make_callback(self, callback):
-        def f(*args, **kwargs):
-            callback(*args, **kwargs)
+        def f(args):
+            callback(*args)
             self.finish()
 
         return f
