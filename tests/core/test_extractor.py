@@ -1,4 +1,5 @@
-from otscrape import PageBase, Raw, DummyLoader, chain, Extractor, JSON
+from requests import Response
+from otscrape import PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, extractor
 
 
 def test_Raw():
@@ -38,3 +39,45 @@ def test_chain():
 
     p = TestPageBase()
     assert p['result'] == 'cd00'
+
+
+def test_SoupFindAll_with_text():
+    class TestPageBase(PageBase):
+        loader = DummyLoader('<html><body><h1 id="head1">Hello World</h1><h1 id="head2">otscrape!</h1></body></html>')
+
+        elements = SoupFindAll('h1')
+
+        @extractor
+        def texts(self):
+            return [e.get_text() for e in self['elements']]
+
+    p = TestPageBase()
+
+    assert p['texts'] == ['Hello World', 'otscrape!']
+
+
+def test_SoupFindAll_with_Response():
+    my_text = '<html><body><h1 id="head1">Hello World</h1><h1 id="head2">otscrape!</h1></body></html>'
+
+    class MyResponse(Response):
+        def __init__(self):
+            super().__init__()
+            self.status_code = 200
+
+        @property
+        def text(self):
+            return my_text
+
+    class TestPageBase(PageBase):
+        loader = DummyLoader(MyResponse())
+
+        elements = SoupFindAll('h1')
+
+        @extractor
+        def texts(self):
+            return [e.get_text() for e in self['elements']]
+
+    p = TestPageBase()
+
+    assert p['texts'] == ['Hello World', 'otscrape!']
+    assert p._cached['raw#Soup']
