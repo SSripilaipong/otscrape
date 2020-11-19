@@ -1,3 +1,4 @@
+import traceback
 import time
 import datetime
 from copy import deepcopy
@@ -7,7 +8,7 @@ from threading import Lock
 
 from otscrape.core.base.abstract import NoFailMixin
 from otscrape.core.base.loader import Loader
-from otscrape.core.base.exception import LoaderNotAvailableException
+from otscrape.core.base.exception import LoaderNotAvailableException, LoadingFailedException
 
 
 class RequestLoaderBase(Loader):
@@ -102,7 +103,8 @@ class RequestLoaderBase(Loader):
                 resp.raise_for_status()
             except Exception as e:
                 if count >= self.max_retries:
-                    raise e
+                    traceback.print_exception(type(e), e, e.__traceback__)
+                    raise LoadingFailedException(str(e))
             count += 1
 
             if self.delay:
