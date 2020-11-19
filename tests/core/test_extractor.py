@@ -1,5 +1,5 @@
 from requests import Response
-from otscrape import PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, extractor
+from otscrape import PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, SoupSelect, extractor
 
 
 def test_Raw():
@@ -81,3 +81,37 @@ def test_SoupFindAll_with_Response():
 
     assert p['texts'] == ['Hello World', 'otscrape!']
     assert p._cached['raw#Soup']
+
+
+def test_SoupSelect():
+    my_text = '<html><body><h1 id="head1">Hello World</h1><h1 id="head2"><b>otscrape!</b></h1></body></html>'
+
+    class TestPageBase(PageBase):
+        loader = DummyLoader(my_text)
+
+        elements = SoupSelect('h1 > b')
+
+        @extractor
+        def texts(self):
+            return [e.get_text() for e in self['elements']]
+
+    p = TestPageBase()
+
+    assert p['texts'] == ['otscrape!']
+
+
+def test_SoupSelect_one():
+    my_text = '<html><body><h1 id="head1">Hello World</h1><h1 id="head2"><b>otscrape!</b></h1></body></html>'
+
+    class TestPageBase(PageBase):
+        loader = DummyLoader(my_text)
+
+        element = SoupSelect('h1 > b', multiple=False)
+
+        @extractor
+        def text(self):
+            return self['element'].get_text()
+
+    p = TestPageBase()
+
+    assert p['text'] == 'otscrape!'

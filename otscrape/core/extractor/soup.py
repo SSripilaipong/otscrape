@@ -48,3 +48,27 @@ class SoupFindAll(Extractor):
         soup = self._soup_ext.extract(page, cache)
 
         return soup.find_all(**self.kwargs)
+
+
+class SoupSelect(Extractor):
+    def __init__(self, selector, namespaces=None, limit=None, *,
+                 default_parser='html.parser', multiple=True, target=None, project=True, replace_error=None, **kwargs):
+        super().__init__(target=target, project=project, replace_error=replace_error)
+
+        kwargs.update({'selector': selector, 'namespaces': namespaces, 'limit': limit})
+        if not multiple:
+            del kwargs['limit']
+        self.kwargs = kwargs
+        self.multiple = multiple
+
+        self._soup_ext = Soup(parser=default_parser, target=self.target)
+
+    def extract(self, page, cache):
+        soup = self._soup_ext.extract(page, cache)
+
+        if self.multiple:
+            result = soup.select(**self.kwargs)
+        else:
+            result = soup.select_one(**self.kwargs)
+
+        return result

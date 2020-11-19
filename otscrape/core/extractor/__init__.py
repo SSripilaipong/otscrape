@@ -6,4 +6,4 @@ from .dict import DictPath
 from .xpath import XPath
 from .nested import ZipDict
 from .chain import chain
-from .soup import SoupFindAll
+from .soup import SoupFindAll, SoupSelect
