@@ -7,8 +7,8 @@ from .text.soup import TextSoup
 
 
 class Soup(TextSoup):
-    def __init__(self, target=None, *, project=True, replace_error=None, **kwargs):
-        super().__init__(target, project=project, replace_error=replace_error, **kwargs)
+    def __init__(self, parser='html.parser', target=None, *, project=True, replace_error=None, **kwargs):
+        super().__init__(parser, target, project=project, replace_error=replace_error, **kwargs)
 
         self._req_parser = RequestText(target=self.target)
 
@@ -35,14 +35,14 @@ class Soup(TextSoup):
 
 class SoupFindAll(Extractor):
     def __init__(self, name=None, attrs={}, recursive=True, string=None, limit=None, *,
-                 target=None, project=True, replace_error=None, **kwargs):
+                 default_parser='html.parser', target=None, project=True, replace_error=None, **kwargs):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
         kwargs.update({'name': name, 'attrs': attrs, 'recursive': recursive,
                        'string': string, 'limit': limit})
         self.kwargs = kwargs
 
-        self._soup_ext = Soup(self.target)
+        self._soup_ext = Soup(parser=default_parser, target=self.target)
 
     def extract(self, page, cache):
         soup = self._soup_ext.extract(page, cache)
