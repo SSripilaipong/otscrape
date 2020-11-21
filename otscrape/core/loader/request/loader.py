@@ -1,6 +1,7 @@
 import traceback
 import time
 from copy import deepcopy
+from threading import Lock
 import requests
 
 from otscrape.core.base.abstract import NoFailMixin
@@ -23,17 +24,20 @@ class RequestLoaderBase(Loader):
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
+            if isinstance(v, Lock):
+                setattr(result, k, v)  # share locks
+            else:
+                setattr(result, k, deepcopy(v, memo))
         return result
 
-    def post(self, **kwargs):
+    def POST(self, **kwargs):
         result = deepcopy(self)
         result.method = 'POST'
         for k, v in kwargs.items():
             setattr(result, k, v)
         return result
 
-    def get(self, **kwargs):
+    def GET(self, **kwargs):
         result = deepcopy(self)
         result.method = 'GET'
         for k, v in kwargs.items():
