@@ -1,12 +1,74 @@
+import datetime
+from collections import deque
+from threading import Lock
+
+from .exception import LoaderNotAvailableException
 from .abstract import WillFail
 
 
-class Loader(WillFail):
+class RateLimitConstraint:
+    def __init__(self, rate_limit=''):
+        self.rate_limit = rate_limit
+        self.rate_limit_count, self.rate_limit_second = (map(float, rate_limit.split('/'))
+                                                         if rate_limit else (float('inf'), float('inf')))
+        self.timestamp_queue = deque()
+
     def check_available(self):
-        return True
+        if not self.rate_limit:
+            return True
+
+        if not self.timestamp_queue:
+            return True
+
+        now = datetime.datetime.now().timestamp()
+
+        while self.timestamp_queue and now - self.timestamp_queue[0] > self.rate_limit_second:
+            self.timestamp_queue.popleft()
+
+        count = len(self.timestamp_queue)
+        return count < self.rate_limit_count
+
+    def on_available(self):
+        timestamp = datetime.datetime.now().timestamp()
+        self.timestamp_queue.append(timestamp)
 
     def get_available_time(self):
-        return 0
+        if self.check_available():
+            return 0
+
+        first = self.timestamp_queue[0]
+
+        now = datetime.datetime.now().timestamp()
+
+        return max(self.rate_limit_second - (now - first), 0)
+
+
+class Loader(WillFail):
+    def __init__(self, rate_limit=''):
+        super().__init__()
+
+        self.constraints = []
+
+        if rate_limit:
+            self.constraints.append(RateLimitConstraint(rate_limit=rate_limit))
+
+        self.lock = Lock()
+
+    def _check_available_no_lock(self):
+        for constraint in self.constraints:
+            if not constraint.check_available():
+                return False
+        return True
+
+    def check_available(self, lock=True):
+        if lock:
+            with self.lock:
+                return self._check_available_no_lock()
+        return self._check_available_no_lock()
+
+    def on_available(self):
+        for constraint in self.constraints:
+            constraint.on_available()
 
     def __call__(self, *args, **kwargs):
         self.do_on_loading()
@@ -19,6 +81,12 @@ class Loader(WillFail):
         finally:
             self._on_loaded()
 
+    def get_available_time(self):
+        if self.constraints:
+            with self.lock:
+                return max(constraint.get_available_time() for constraint in self.constraints)
+        return 0
+
     def do_load(self, *args, **kwargs):
         raise NotImplementedError()
 
@@ -29,7 +97,11 @@ class Loader(WillFail):
         return self.on_loaded()
 
     def on_loading(self):
-        pass
+        with self.lock:
+            if not self.check_available(lock=False):
+                raise LoaderNotAvailableException()
+
+            self.on_available()
 
     def on_loaded(self):
         pass
