@@ -52,7 +52,7 @@ class PageBase(DataModel):
     def prune(self):
         cache_result = {}
 
-        attrs = self._project_attrs
+        attrs = self._project_attrs | {'raw'}
         if 'key' in self._attrs:
             attrs.add('key')
 
