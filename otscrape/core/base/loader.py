@@ -52,7 +52,7 @@ class Loader(WillFail):
         if rate_limit:
             self.constraints.append(RateLimitConstraint(rate_limit=rate_limit))
 
-        self.lock = Lock()
+        self.constraint_lock = Lock()
 
     def _check_available_no_lock(self):
         for constraint in self.constraints:
@@ -62,7 +62,7 @@ class Loader(WillFail):
 
     def check_available(self, lock=True):
         if lock:
-            with self.lock:
+            with self.constraint_lock:
                 return self._check_available_no_lock()
         return self._check_available_no_lock()
 
@@ -83,7 +83,7 @@ class Loader(WillFail):
 
     def get_available_time(self):
         if self.constraints:
-            with self.lock:
+            with self.constraint_lock:
                 return max(constraint.get_available_time() for constraint in self.constraints)
         return 0
 
@@ -97,7 +97,7 @@ class Loader(WillFail):
         return self.on_loaded()
 
     def on_loading(self):
-        with self.lock:
+        with self.constraint_lock:
             if not self.check_available(lock=False):
                 raise LoaderNotAvailableException()
 
