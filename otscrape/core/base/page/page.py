@@ -12,6 +12,7 @@ class PageBase(DataModel):
         self._loader_kwargs = kwargs
         self._cached = {}
         self._raw = None
+        self._is_loaded = False
 
     @property
     def name(self) -> str:
@@ -23,6 +24,9 @@ class PageBase(DataModel):
 
     @extractor(project=False)
     def raw(self):
+        if self._is_loaded:
+            return self._raw
+
         return self.fetch()
 
     def fetch(self):
@@ -41,7 +45,9 @@ class PageBase(DataModel):
         return self.do_load()
 
     def do_load(self):
-        return self.loader.do_load(**self._loader_kwargs)
+        self._raw = self.loader.do_load(**self._loader_kwargs)
+        self._is_loaded = True
+        return self._raw
 
     def prune(self):
         cache_result = {}
