@@ -15,10 +15,6 @@ class PageBase(DataModel):
         self._is_loaded = False
 
     @property
-    def name(self) -> str:
-        raise NotImplementedError()
-
-    @property
     def loader(self) -> Loader:
         raise NotImplementedError()
 
