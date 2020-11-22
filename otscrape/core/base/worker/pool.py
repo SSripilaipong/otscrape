@@ -4,6 +4,7 @@ from multiprocessing import Pool, Value, Event
 
 from otscrape.core.base.wrapper import PageWrapper
 from otscrape.core.base.exception import PoolWorkerFailedException
+from otscrape.core.base.exception import DropCommandException
 
 
 def ensure_n_workers(n_workers):
@@ -90,19 +91,35 @@ class PoolCommand:
     def calculate(page):
         raise NotImplementedError()
 
-    def callback(self, order, page, exception):
+    def make_result(self, order, page, exception):
         ss = self.state.substate(page) if self.state else None
         result = PageWrapper(page, order, state=ss, exception=exception)
+        return result
 
+    def do_callback(self, result):
+        page = result.page
         exception = result.exception
         if exception:
+            if isinstance(exception, (DropCommandException,)):
+                self.drop_callback(result)
+                return
+
             traceback.print_exception(type(exception), exception, exception.__traceback__)
 
-            message = f'Page {page} (key: {page["key"]!r}) was not processed successfully.'
+            try:
+                message = f'Page {page} (key: {page["key"]!r}) was not processed successfully.'
+            except KeyError:
+                message = f'Page {page} was not processed successfully.'
             exception = PoolWorkerFailedException(message)
             traceback.print_exception(type(exception), exception, None)
 
-        return result
+        self.callback(result)
+
+    def drop_callback(self, page_wrapper):
+        pass
+
+    def callback(self, page_wrapper):
+        pass
 
     def finish(self, pages, *args, **kwargs):
         return
@@ -121,7 +138,9 @@ class PoolTask:
 
         self.calculation = PoolTaskCalculation(self.order, command.calculate).calculation
         self.command_prepare = command.prepare
-        self.callback = command.callback
+        self.callback = command.do_callback
+        self.drop_callback = command.drop_callback
+        self.make_result = command.make_result
 
     def prepare(self):
         return self.command_prepare(self.page)

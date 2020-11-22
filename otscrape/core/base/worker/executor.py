@@ -11,7 +11,7 @@ from .pool import PoolManager, PoolCommand
 
 class TaskManager(Thread):
     def __init__(self, executor):
-        self.executor = executor
+        self.executor = executor  # type: CommandExecutor
         self.running = True
 
         super().__init__()
@@ -27,7 +27,9 @@ class TaskManager(Thread):
 
             try:
                 task.prepare()
-            except DropCommandException:
+            except DropCommandException as e:
+                callback = self.executor.make_callback(task.drop_callback, task.make_result)
+                callback((task.order, task.page, e))
                 continue
             except LoaderNotAvailableException:
                 self.executor.put_task(task)
@@ -83,7 +85,7 @@ class CommandExecutor:
         self.tasks.put(task)
 
     def execute_task(self, task):
-        self._apply(task.calculation, (task.page,), self.make_callback(task.callback))
+        self._apply(task.calculation, (task.page,), self.make_callback(task.callback, task.make_result))
 
     def wait_pool(self):
         self.done_event.clear()
@@ -156,9 +158,10 @@ class CommandExecutor:
 
         self.done_event.set()
 
-    def make_callback(self, callback):
+    def make_callback(self, callback, make_result):
         def f(args):
-            callback(*args)
+            result = make_result(*args)
+            callback(result)
             self.finish()
 
         return f

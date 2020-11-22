@@ -74,12 +74,16 @@ class ExportCommand(PoolCommand):
         page.prune()
         return page
 
-    def callback(self, *args):
-        result = super().callback(*args)
-
+    def callback(self, result):
         exception = result.exception
         if not exception:
             self.exporter(result.page)
+
+        if result.state:
+            result.state.try_complete()
+
+    def drop_callback(self, result):
+        super().drop_callback(result)
 
         if result.state:
             result.state.try_complete()
