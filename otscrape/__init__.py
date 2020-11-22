@@ -14,3 +14,5 @@ from otscrape.core.exporter import JSONExporter
 from otscrape.core.worker import Workers
 
 from otscrape.core.pandas import scrape_pandas
+
+import otscrape.core.magics
