@@ -1,4 +1,4 @@
-from otscrape import PageBase, Attribute, DummyLoader, Extractor
+from otscrape import PageBase, Attribute, DummyLoader, Extractor, Raw
 
 
 def test_attribute():
@@ -24,18 +24,57 @@ def test_loader():
 
 
 def test_load_once(mocker):
-    loader_mock = mocker.Mock()
-    loader_mock.do_load = mocker.Mock(return_value='abcd')
-    loader_mock.get_available_time = mocker.Mock(return_value=0)
+    def get_loader_mock():
+        loader_mock = mocker.Mock()
+        loader_mock.do_load = mocker.Mock(return_value='abcd')
+        loader_mock.get_available_time = mocker.Mock(return_value=0)
+        return loader_mock
+
+    loader_mock = get_loader_mock()
+
+    class FirstChar(Extractor):
+        def extract(self, page, cache):
+            return page[self.target][0]
 
     class TestPageBase(PageBase):
         loader = loader_mock
 
+        data = Raw()
+        first = FirstChar()
+
     p = TestPageBase()
 
+    _ = p['first']
     _ = p['raw']
     _ = p['raw']
+    _ = p['first']
 
+    ####################
+    loader_mock = get_loader_mock()
+
+    class TestPageBase(PageBase):
+        loader = loader_mock
+
+        data = Raw()
+        first = FirstChar()
+
+    p = TestPageBase()
+    p.get_data()
+    loader_mock.do_load.assert_called_once()
+
+    ####################
+    loader_mock = get_loader_mock()
+
+    class TestPageBase(PageBase):
+        loader = loader_mock
+
+        data = Raw()
+        first = FirstChar()
+
+    p = TestPageBase()
+    p.do_load()
+    p.get_data()
+    p.prune()
     loader_mock.do_load.assert_called_once()
 
 
