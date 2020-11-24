@@ -54,6 +54,15 @@ class Loader(WillFail):
 
         self.constraint_lock = Lock()
 
+    def __getstate__(self):
+        state = dict(self.__dict__)
+        del state['constraint_lock']  # no need when processing
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.__dict__['constraint_lock'] = None
+
     def _check_available_no_lock(self):
         for constraint in self.constraints:
             if not constraint.check_available():

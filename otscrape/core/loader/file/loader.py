@@ -1,4 +1,6 @@
 import os
+from typing import Iterable
+from collections import deque
 from threading import Thread
 import threading
 import queue
@@ -9,17 +11,17 @@ from otscrape.core.base.loader import Loader
 
 
 class LineFetcher(Thread):
-    def __init__(self, filename, data_queue: JoinableQueue, fetch_size, params=None):
+    def __init__(self, filenames, data_queue: JoinableQueue, fetch_size, params=None):
         super().__init__()
 
-        self.filename = filename
+        self.filenames = deque(filenames)
         self.data_queue = data_queue
         self.fetch_size = fetch_size
 
         _params = {'mode': 'r'}
         _params.update(params)
-        self.file = open(filename, **_params)
-        self.st_size = os.fstat(self.file.fileno()).st_size
+        self.files = deque(open(filename, **_params) for filename in self.filenames)
+        self.st_sizes = deque(os.fstat(file.fileno()).st_size for file in self.files)
         self.lock = Lock()
         self._is_eof = False
         self._is_finished = Value('B', 0)
@@ -38,14 +40,26 @@ class LineFetcher(Thread):
             return bool(self._is_finished.value)
 
     def fetch_one_line(self):
-        line = self.file.readline()
+        filename = self.filenames[0]
+        line = self.files[0].readline()
         with self._n_lines_lock:
+            line_no = self._n_lines
             self._n_lines += 1
 
-        if self.file.tell() == self.st_size:
-            self._is_eof = True
+        if self.files[0].tell() == self.st_sizes[0]:
+            self.filenames.popleft()
+            self.files.popleft()
+            self.st_sizes.popleft()
 
-        return line
+            if not self.files:
+                assert not self.st_sizes
+                self._is_eof = True
+            else:
+                with self._n_lines_lock:
+                    self._n_lines = 0
+
+        obj = LineObject(filename, line_no, line)
+        return obj
 
     def run(self):
         while not self.is_finished:
@@ -53,7 +67,9 @@ class LineFetcher(Thread):
             for _ in range(n_fill):
                 if self._is_eof or self.is_finished:
                     break
-                self.data_queue.put(self.fetch_one_line())
+
+                obj = self.fetch_one_line()
+                self.data_queue.put(obj)
 
             if self._is_eof or self.is_finished:
                 break
@@ -73,7 +89,8 @@ class LineFetcher(Thread):
             self.data_queue.get(timeout=3)
             self.data_queue.task_done()
 
-        self.file.close()
+        for file in self.files:
+            file.close()
 
 
 class LineObject:
@@ -89,41 +106,57 @@ class LineObject:
 
 
 class LineLoader(Loader):
-    def __init__(self, filename, rate_limit='', fetch_size=None, **kwargs):
+    def __init__(self, filenames=None, rate_limit='', fetch_size=None, **kwargs):
         super().__init__(rate_limit=rate_limit)
 
-        self.filename = filename
+        if filenames is None:
+            return
+        if isinstance(filenames, Iterable) and not isinstance(filenames, str):
+            self.filenames = filenames
+        else:
+            self.filenames = [filenames]
+
         self.fetch_size = fetch_size or (cpu_count() * 2)
         self.kwargs = kwargs
 
-        self.line_no = Value('L', 0)
+        self._count_load = 0
+        self.tot_line = sum(1 for filename in self.filenames for _ in open(filename))
+
         self.line_queue = JoinableQueue()
+
         self.fetcher = self.get_fetcher()
         self.fetcher.start()
 
-        self._count_load = 0
+    def __getstate__(self):
+        state = super().__getstate__()
+        print()
+        del state['fetcher']
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.__dict__['fetcher'] = None
 
     def get_fetcher(self):
-        return LineFetcher(self.filename, self.line_queue, self.fetch_size, self.kwargs)
-
-    def has_more_lines(self):
-        return not self.fetcher.is_finished
+        return LineFetcher(self.filenames, self.line_queue, self.fetch_size, self.kwargs)
 
     def reset(self):
+        self._count_load = 0
+        self.tot_line = sum(1 for filename in self.filenames for _ in open(filename))
+
         self.fetcher.close()
         self.fetcher.join()
 
         self.line_queue.close()
         self.line_queue = JoinableQueue()
 
-        self.line_no = Value('L', 0)
         self.fetcher = self.get_fetcher()
         self.fetcher.start()
 
     def on_loading(self):
         super().on_loading()
 
-        if self.fetcher.is_finished and self._count_load >= self.fetcher.n_lines:
+        if self._count_load >= self.tot_line:
             raise DropCommandException()
 
         self._count_load += 1
@@ -131,15 +164,10 @@ class LineLoader(Loader):
     def do_load(self):
         while True:
             try:
-                content = self.line_queue.get(timeout=3)
-
-                with self.line_no.get_lock():
-                    data = LineObject(self.filename, self.line_no.value, content)
-                    self.line_no.value += 1
+                data = self.line_queue.get(timeout=3)
 
                 self.line_queue.task_done()
                 return data
 
             except queue.Empty:
-                if not self.has_more_lines():
-                    raise DropCommandException('All lines are already read.')
+                pass

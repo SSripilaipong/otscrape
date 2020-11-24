@@ -118,10 +118,10 @@ class CommandExecutor:
         with self.curr_run_lock:
             self.curr_run_count += 1
 
-        self.pool.workers.apply_async(target, args=args, callback=callback)
+        # self.pool.workers.apply_async(target, args=args, callback=callback)
 
-        # a = self.pool.workers.apply(target, args=args)
-        # callback(a)
+        a = self.pool.workers.apply(target, args=args)
+        callback(a)
 
     def execute(self, command: PoolCommand, page, state=None, *args, **kwargs):
         pages = ensure_page_iter(page)
