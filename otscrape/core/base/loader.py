@@ -47,6 +47,7 @@ class Loader(WillFail):
     def __init__(self, rate_limit=''):
         super().__init__()
 
+        self.rate_limit = rate_limit
         self.constraints = []
 
         if rate_limit:
