@@ -9,6 +9,8 @@ from multiprocessing import JoinableQueue, cpu_count, Lock, Value
 from otscrape.core.base.exception import DropCommandException
 from otscrape.core.base.loader import Loader
 
+from .result import LineObject
+
 
 class LineFetcher(Thread):
     def __init__(self, filenames, data_queue: JoinableQueue, fetch_size, params=None):
@@ -91,18 +93,6 @@ class LineFetcher(Thread):
 
         for file in self.files:
             file.close()
-
-
-class LineObject:
-    def __init__(self, filename, line_no, content):
-        self.content = content
-        self.filename = filename
-        self.line_no = line_no
-
-    def __repr__(self):
-        n_char = 20
-        content = self.content if len(self.content) < n_char else f'{self.content[:n_char]}...'
-        return f'LineObject({self.filename!r}, {self.line_no}, {content!r})'
 
 
 class LineLoader(Loader):

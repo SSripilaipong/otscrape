@@ -1,5 +1,8 @@
 from requests import Response
-from otscrape import PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, SoupSelect, extractor
+from tempfile import NamedTemporaryFile
+
+from otscrape import (PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, SoupSelect, extractor,
+                      FileLinePage, FileContent, FileLineNumber, FileName)
 
 
 def test_Raw():
@@ -115,3 +118,25 @@ def test_SoupSelect_one():
     p = TestPageBase()
 
     assert p['text'] == 'otscrape!'
+
+
+def test_file_extractor():
+    with NamedTemporaryFile('w') as f:
+        f.file.writelines(['Hello\n', 'World\n', '\n', 'One\n', 'Two\n', 'Scrape\n'])
+        f.file.flush()
+
+        class TestLinePage(FileLinePage):
+            _loader__filenames = f.name
+
+            line_content = FileContent()
+            line_no = FileLineNumber()
+            file_name = FileName()
+
+        ls = list(TestLinePage.iter_lines())
+        result = [{'line_content': 'Hello\n', 'line_no': 0, 'file_name': f.name},
+                  {'line_content': 'World\n', 'line_no': 1, 'file_name': f.name},
+                  {'line_content': '\n', 'line_no': 2, 'file_name': f.name},
+                  {'line_content': 'One\n', 'line_no': 3, 'file_name': f.name},
+                  {'line_content': 'Two\n', 'line_no': 4, 'file_name': f.name},
+                  {'line_content': 'Scrape\n', 'line_no': 5, 'file_name': f.name}]
+        assert [x.get_data() for x in ls] == result
