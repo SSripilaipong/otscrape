@@ -5,6 +5,7 @@ from multiprocessing import Pool, Value, Event
 from otscrape.core.base.wrapper import PageWrapper
 from otscrape.core.base.exception import PoolWorkerFailedException
 from otscrape.core.base.exception import DropCommandException
+from otscrape.core.base import share
 
 
 def ensure_n_workers(n_workers):
@@ -20,6 +21,10 @@ def ensure_n_workers(n_workers):
     assert isinstance(n_workers, int) and 0 < n_workers
 
     return n_workers
+
+
+def pool_init():
+    share.is_worker = True
 
 
 class PoolManager:
@@ -44,7 +49,7 @@ class PoolManager:
 
         self._remain_tasks = Value('i', 0)
         self._work_done_event = Event()
-        self.workers = Pool(self.n_workers)
+        self.workers = Pool(self.n_workers, initializer=pool_init)
         self.ready = True
 
         return self
