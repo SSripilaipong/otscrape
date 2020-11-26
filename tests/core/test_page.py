@@ -1,5 +1,5 @@
 from requests import Response
-from otscrape import Page, RequestText
+from otscrape import Page, RequestText, DataPage
 
 
 def test_request_call_once(mocker):
@@ -40,3 +40,11 @@ def test_request_call_once_with_post(mocker):
     req_mock = mocker.patch('requests.request', return_value=MyResponse())
     _ = p['raw']
     req_mock.assert_called_once_with('POST', url=url)
+
+
+def test_data_page():
+    class TestPage(DataPage):
+        pass
+
+    p = TestPage('Hello')
+    assert p['raw'] == 'Hello'

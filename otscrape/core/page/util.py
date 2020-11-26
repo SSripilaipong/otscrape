@@ -8,7 +8,7 @@ def get_page_meta(loader_cls):
             loader_params = {}
             loader_prefix = '_loader__'
             for key, value in dct.items():
-                assert key != 'loader'
+                assert key != 'loader' or value is None
 
                 if key.startswith(loader_prefix):
                     name = key[len(loader_prefix):]

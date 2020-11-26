@@ -5,4 +5,4 @@ from .util import get_page_meta
 
 
 class Page(PageBase, metaclass=get_page_meta(SimpleRequestLoader)):
-    pass
+    loader = None

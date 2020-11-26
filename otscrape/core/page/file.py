@@ -5,6 +5,8 @@ from .util import get_page_meta
 
 
 class FileLinePage(PageBase, metaclass=get_page_meta(LineLoader)):
+    loader = None
+
     @classmethod
     def iter_lines(cls):
         return (cls() for _ in range(cls.loader.tot_line))
