@@ -4,7 +4,7 @@ from otscrape.core.loader import LineLoader
 from .util import get_page_meta
 
 
-class FileLinePage(PageBase, metaclass=get_page_meta(LineLoader)):
+class FileLinePage(PageBase, metaclass=get_page_meta(LineLoader, parallel=True)):
     loader = None
 
     @classmethod

@@ -1,11 +1,11 @@
 from otscrape.core.base.data_model import DataModelMeta
 
 
-def get_page_meta(loader_cls):
+def get_page_meta(loader_cls, **params):
     class PageMeta(DataModelMeta):
         def __new__(mcs, name, bases, dct):
             dct_new = {}
-            loader_params = {}
+            loader_params = dict(params)
             loader_prefix = '_loader__'
             for key, value in dct.items():
                 assert key != 'loader' or value is None
