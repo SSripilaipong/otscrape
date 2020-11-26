@@ -42,6 +42,7 @@ class PageBase(DataModel):
 
     def do_load(self):
         self._raw = self.loader.do_load(**self._loader_kwargs)
+        self._attr_cached['raw'] = self._raw
         self._is_loaded = True
         return self._raw
 
