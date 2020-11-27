@@ -1,13 +1,11 @@
 from otscrape.core.base.page import PageBase
-from otscrape.core.loader import LineLoader
+from otscrape.core.loader import LineLoader, JSONFileLoader
 from otscrape.core.base import share
 
 from .util import get_page_meta
 
 
-class FileLinePage(PageBase, metaclass=get_page_meta(LineLoader, parallel=True)):
-    loader = None
-
+class FileLoaderMethodMixin:
     @classmethod
     def iter_lines(cls):
         return (cls() for _ in range(cls.loader.tot_line))
@@ -34,3 +32,11 @@ class FileLinePage(PageBase, metaclass=get_page_meta(LineLoader, parallel=True))
     @classmethod
     def reset(cls):
         cls.loader.reset()
+
+
+class FileLinePage(FileLoaderMethodMixin, PageBase, metaclass=get_page_meta(LineLoader, parallel=True)):
+    loader = None
+
+
+class JSONLinePage(FileLoaderMethodMixin, PageBase, metaclass=get_page_meta(JSONFileLoader, parallel=True)):
+    loader = None

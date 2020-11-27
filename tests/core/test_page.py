@@ -1,5 +1,6 @@
+from tempfile import NamedTemporaryFile
 from requests import Response
-from otscrape import Page, RequestText, DataPage
+from otscrape import Page, RequestText, DataPage, JSONLinePage, DictPath
 
 
 def test_request_call_once(mocker):
@@ -48,3 +49,24 @@ def test_data_page():
 
     p = TestPage('Hello')
     assert p['raw'] == 'Hello'
+
+
+def test_json_file_extractor():
+    with NamedTemporaryFile('w') as f:
+        f.file.writelines(['{"a":1, "b":"Hello"}\n',
+                           '{"a":2, "b":"World"}\n',
+                           '{"a":3, "c":"Hello"}\n'])
+        f.file.flush()
+
+        class TestLinePage(JSONLinePage):
+            _loader__filenames = f.name
+
+            a = DictPath('/a')
+            b = DictPath('/b')
+            c = DictPath('/c')
+
+        ls = list(TestLinePage.iter_lines())
+        result = [{'a': 1, 'b': 'Hello', 'c': None},
+                  {'a': 2, 'b': 'World', 'c': None},
+                  {'a': 3, 'b': None,    'c': 'Hello'}]
+        assert [x.get_data() for x in ls] == result
