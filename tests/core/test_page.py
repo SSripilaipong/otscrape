@@ -51,7 +51,7 @@ def test_data_page():
     assert p['raw'] == 'Hello'
 
 
-def test_json_file_extractor():
+def test_JSONLinePage():
     with NamedTemporaryFile('w') as f:
         f.file.writelines(['{"a":1, "b":"Hello"}\n',
                            '{"a":2, "b":"World"}\n',
