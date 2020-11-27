@@ -12,39 +12,59 @@ from otscrape.core.base.loader import Loader
 from .result import LineObject
 
 
-class FilesManager:
-    def __init__(self, filenames, skiprows=0, params=None):
-        self.filenames = deque(filenames)
+class TextFileLineReader:
+    def __init__(self, filename, skiprows=0, **params):
+        self.filename = filename
         self.skiprows = skiprows
 
-        _params = {'mode': 'r'}
-        _params.update(params or {})
-        self.files = deque(open(filename, **_params) for filename in self.filenames)
-        self._do_skiprows()
+        self.params = {'mode': 'r'}
+        self.params.update(params or {})
 
-        self.st_sizes = deque(os.fstat(file.fileno()).st_size for file in self.files)
-        self.n_lines = 0
-        self.is_eof = False
+        self.file = None
+        self.st_size = None
 
     def _do_skiprows(self):
         for _ in range(self.skiprows):
-            for file in self.files:
-                file.readline()
+            _ = self.read_line()
+
+    def open(self):
+        self.file = open(self.filename, **self.params)
+        self.st_size = os.fstat(self.file.fileno()).st_size
+
+        self._do_skiprows()
+
+    def close(self):
+        self.file.close()
+
+    def is_eof(self):
+        return self.file.tell() == self.st_size
+
+    def read_line(self):
+        return self.file.readline()
+
+
+class FilesManager:
+    def __init__(self, readers):
+        self.readers = deque(readers)
+
+        self.n_lines = 0
+        self.is_eof = False
+
+        for reader in self.readers:
+            reader.open()
 
     def fetch_one_line(self):
-        filename = self.filenames[0]
-        line = self.files[0].readline()
+        reader = self.readers[0]
+        filename = reader.filename
+        line = reader.read_line()
 
         line_no = self.n_lines
         self.n_lines += 1
 
-        if self.files[0].tell() == self.st_sizes[0]:
-            self.filenames.popleft()
-            self.files.popleft()
-            self.st_sizes.popleft()
+        if reader.is_eof():
+            self.readers.popleft()
 
-            if not self.files:
-                assert not self.st_sizes
+            if not self.readers:
                 self.is_eof = True
             else:
                 self.n_lines = 0
@@ -53,16 +73,15 @@ class FilesManager:
         return obj
 
     def close(self):
-        for file in self.files:
-            file.close()
+        for reader in self.readers:
+            reader.close()
 
 
 class LineFetcher(Thread):
-    def __init__(self, filenames, data_queue: JoinableQueue, fetch_size, skiprows=0, params=None):
+    def __init__(self, manager, data_queue: JoinableQueue, fetch_size):
         super().__init__()
 
-        self.manager = FilesManager(filenames, skiprows=skiprows, params=params)
-
+        self.manager = manager
         self.data_queue = data_queue
         self.fetch_size = fetch_size
 
@@ -136,7 +155,8 @@ class LineLoader(Loader):
         self.skiprows = skiprows
 
         self._count_load = 0
-        self.tot_line = sum(1 for filename in self.filenames for _ in open(filename)) - self.skiprows
+        self.tot_line = (sum(1 for filename in self.filenames for _ in open(filename))
+                         - self.skiprows * len(self.filenames))
 
         if parallel:
             self.manager = None
@@ -161,10 +181,15 @@ class LineLoader(Loader):
         self.__dict__['fetcher'] = None
 
     def get_manager(self):
-        return FilesManager(self.filenames, skiprows=self.skiprows, params=self.kwargs)
+        readers = [self.get_line_reader(filename) for filename in self.filenames]
+        return FilesManager(readers)
 
     def get_fetcher(self):
-        return LineFetcher(self.filenames, self.line_queue, self.fetch_size, self.skiprows, self.kwargs)
+        manager = self.get_manager()
+        return LineFetcher(manager, self.line_queue, self.fetch_size)
+
+    def get_line_reader(self, filename):
+        return TextFileLineReader(filename, skiprows=self.skiprows, **self.kwargs)
 
     def reset(self):
         self._count_load = 0
