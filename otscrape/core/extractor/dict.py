@@ -28,7 +28,7 @@ def get_item_from_path(d, path):
 
 
 class DictPath(Extractor):
-    def __init__(self, target=None, path='/', *, project=True, replace_error=None):
+    def __init__(self, path='/', target=None, *, project=True, replace_error=None):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
         self.path = path

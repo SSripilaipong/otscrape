@@ -14,13 +14,13 @@ parsers = [
 
 
 class JSON(Extractor):
-    def __init__(self, target=None, path='/', *, project=True, replace_error=None, **kwargs):
+    def __init__(self, path='/', target=None, *, project=True, replace_error=None, **kwargs):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
         self.path = path
         self._kwargs = kwargs
 
-        self._parsers = [(c, p(target, ** self._kwargs)) for c, p in parsers]
+        self._parsers = [(c, p(target=target, **self._kwargs)) for c, p in parsers]
 
     def extract(self, page, cache):
         target = self.target
