@@ -150,6 +150,5 @@ def test_dict_extractor():
         d = DictPath('/d/y[-1]/p')
 
     p = TestPage({'a': 1, 'b': ['Hello', 'World'], 'd': {'x': 1, 'y': [7, 8, 9, {'p': 123}]}})
-    result = {'a': 1, 'b': 'World', 'c': None, 'd': 123}
-    print(p.get_data())
-    assert p.get_data() == result
+
+    assert p.get_data() == {'a': 1, 'b': 'World', 'c': None, 'd': 123}
