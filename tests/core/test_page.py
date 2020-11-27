@@ -1,6 +1,6 @@
 from tempfile import NamedTemporaryFile
 from requests import Response
-from otscrape import Page, RequestText, DataPage, JSONLinePage, DictPath
+from otscrape import Page, RequestText, DataPage, JSONLinePage, DictPath, CSVLinePage
 
 
 def test_request_call_once(mocker):
@@ -70,3 +70,22 @@ def test_JSONLinePage():
                   {'a': 2, 'b': 'World', 'c': None},
                   {'a': 3, 'b': None,    'c': 'Hello'}]
         assert [x.get_data() for x in ls] == result
+
+
+def test_CSVLinePage():
+    with NamedTemporaryFile('w') as f:
+        f.file.writelines(['a,b,c\n',
+                           '1,Hello,123\n',
+                           '2,World,456\n',
+                           '3,"Hello, World",\n'])
+        f.file.flush()
+
+        class TestLinePage(CSVLinePage):
+            _loader__filenames = f.name
+
+        ls = list(TestLinePage.iter_lines())
+        result = [{'a': '1', 'b': 'Hello',        'c': '123'},
+                  {'a': '2', 'b': 'World',        'c': '456'},
+                  {'a': '3', 'b': 'Hello, World', 'c': ''}]
+
+        assert [x['raw'] for x in ls] == result

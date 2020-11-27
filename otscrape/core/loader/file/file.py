@@ -13,15 +13,23 @@ from .result import LineObject
 
 
 class FilesManager:
-    def __init__(self, filenames, params):
+    def __init__(self, filenames, skiprows=0, params=None):
         self.filenames = deque(filenames)
+        self.skiprows = skiprows
 
         _params = {'mode': 'r'}
-        _params.update(params)
+        _params.update(params or {})
         self.files = deque(open(filename, **_params) for filename in self.filenames)
+        self._do_skiprows()
+
         self.st_sizes = deque(os.fstat(file.fileno()).st_size for file in self.files)
         self.n_lines = 0
         self.is_eof = False
+
+    def _do_skiprows(self):
+        for _ in range(self.skiprows):
+            for file in self.files:
+                file.readline()
 
     def fetch_one_line(self):
         filename = self.filenames[0]
@@ -50,10 +58,10 @@ class FilesManager:
 
 
 class LineFetcher(Thread):
-    def __init__(self, filenames, data_queue: JoinableQueue, fetch_size, params=None):
+    def __init__(self, filenames, data_queue: JoinableQueue, fetch_size, skiprows=0, params=None):
         super().__init__()
 
-        self.manager = FilesManager(filenames, params)
+        self.manager = FilesManager(filenames, skiprows=skiprows, params=params)
 
         self.data_queue = data_queue
         self.fetch_size = fetch_size
@@ -113,7 +121,7 @@ class LineFetcher(Thread):
 
 
 class LineLoader(Loader):
-    def __init__(self, filenames=None, rate_limit='', fetch_size=None, parallel=False, **kwargs):
+    def __init__(self, filenames=None, rate_limit='', fetch_size=None, skiprows=0, parallel=False, **kwargs):
         super().__init__(rate_limit=rate_limit)
 
         if filenames is None:
@@ -125,9 +133,10 @@ class LineLoader(Loader):
 
         self.parallel = parallel
         self.kwargs = kwargs
+        self.skiprows = skiprows
 
         self._count_load = 0
-        self.tot_line = sum(1 for filename in self.filenames for _ in open(filename))
+        self.tot_line = sum(1 for filename in self.filenames for _ in open(filename)) - self.skiprows
 
         if parallel:
             self.manager = None
@@ -152,10 +161,10 @@ class LineLoader(Loader):
         self.__dict__['fetcher'] = None
 
     def get_manager(self):
-        return FilesManager(self.filenames, self.kwargs)
+        return FilesManager(self.filenames, skiprows=self.skiprows, params=self.kwargs)
 
     def get_fetcher(self):
-        return LineFetcher(self.filenames, self.line_queue, self.fetch_size, self.kwargs)
+        return LineFetcher(self.filenames, self.line_queue, self.fetch_size, self.skiprows, self.kwargs)
 
     def reset(self):
         self._count_load = 0

@@ -1,5 +1,5 @@
 from otscrape.core.base.page import PageBase
-from otscrape.core.loader import LineLoader, JSONFileLoader
+from otscrape.core.loader import LineLoader, JSONFileLoader, CSVFileLoader
 from otscrape.core.base import share
 
 from .util import get_page_meta
@@ -39,4 +39,8 @@ class FileLinePage(FileLoaderMethodMixin, PageBase, metaclass=get_page_meta(Line
 
 
 class JSONLinePage(FileLoaderMethodMixin, PageBase, metaclass=get_page_meta(JSONFileLoader, parallel=True)):
+    loader = None
+
+
+class CSVLinePage(FileLoaderMethodMixin, PageBase, metaclass=get_page_meta(CSVFileLoader, parallel=True)):
     loader = None
