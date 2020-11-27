@@ -4,7 +4,7 @@ from otscrape.core.base.extractor import Extractor
 
 
 key_pattern = re.compile(r'^[a-zA-Z_]+$')
-key_index_pattern = re.compile(r'^[a-zA-Z_]+\[\d+\]$')
+key_index_pattern = re.compile(r'^[a-zA-Z_]+\[-?\d+\]$')
 
 
 def get_item_from_path(d, path):

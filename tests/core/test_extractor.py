@@ -2,7 +2,7 @@ from requests import Response
 from tempfile import NamedTemporaryFile
 
 from otscrape import (PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, SoupSelect, extractor,
-                      FileLinePage, FileContent, FileLineNumber, FileName)
+                      FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
 
 
 def test_Raw():
@@ -140,3 +140,16 @@ def test_file_extractor():
                   {'line_content': 'Two\n', 'line_no': 4, 'file_name': f.name},
                   {'line_content': 'Scrape\n', 'line_no': 5, 'file_name': f.name}]
         assert [x.get_data() for x in ls] == result
+
+
+def test_dict_extractor():
+    class TestPage(DataPage):
+        a = DictPath('/a')
+        b = DictPath('/b[1]')
+        c = DictPath('/c')
+        d = DictPath('/d/y[-1]/p')
+
+    p = TestPage({'a': 1, 'b': ['Hello', 'World'], 'd': {'x': 1, 'y': [7, 8, 9, {'p': 123}]}})
+    result = {'a': 1, 'b': 'World', 'c': None, 'd': 123}
+    print(p.get_data())
+    assert p.get_data() == result
