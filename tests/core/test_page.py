@@ -77,15 +77,18 @@ def test_CSVLinePage():
         f.file.writelines(['a,b,c\n',
                            '1,Hello,123\n',
                            '2,World,456\n',
-                           '3,"Hello, World",\n'])
+                           '3,"Hello, World",\n',
+                           '4,"Hello, \n',
+                           ' World",789\n'])
         f.file.flush()
 
         class TestLinePage(CSVLinePage):
             _loader__filenames = f.name
 
         ls = list(TestLinePage.iter_lines())
-        result = [{'a': '1', 'b': 'Hello',        'c': '123'},
-                  {'a': '2', 'b': 'World',        'c': '456'},
-                  {'a': '3', 'b': 'Hello, World', 'c': ''}]
+        result = [{'a': '1', 'b': 'Hello',           'c': '123'},
+                  {'a': '2', 'b': 'World',           'c': '456'},
+                  {'a': '3', 'b': 'Hello, World',    'c': ''},
+                  {'a': '4', 'b': 'Hello, \n World', 'c': '789'}]
 
         assert [x['raw'] for x in ls] == result

@@ -10,12 +10,14 @@ from otscrape.core.base.exception import DropCommandException
 from otscrape.core.base.loader import Loader
 
 from .result import LineObject
+from .reader import LineReader
 
 
-class TextFileLineReader:
+class TextFileLineReader(LineReader):
     def __init__(self, filename, skiprows=0, **params):
+        super().__init__(skiprows=skiprows)
+
         self.filename = filename
-        self.skiprows = skiprows
 
         self.params = {'mode': 'r'}
         self.params.update(params or {})
@@ -23,15 +25,9 @@ class TextFileLineReader:
         self.file = None
         self.st_size = None
 
-    def _do_skiprows(self):
-        for _ in range(self.skiprows):
-            _ = self.read_line()
-
-    def open(self):
+    def _open(self):
         self.file = open(self.filename, **self.params)
         self.st_size = os.fstat(self.file.fileno()).st_size
-
-        self._do_skiprows()
 
     def close(self):
         self.file.close()
@@ -56,21 +52,29 @@ class FilesManager:
     def fetch_one_line(self):
         reader = self.readers[0]
         filename = reader.filename
-        line = reader.read_line()
+
+        try:
+            line = reader.read_line()
+        except StopIteration as e:
+            self.reach_file_eof()
+            raise e
 
         line_no = self.n_lines
         self.n_lines += 1
 
         if reader.is_eof():
-            self.readers.popleft()
-
-            if not self.readers:
-                self.is_eof = True
-            else:
-                self.n_lines = 0
+            self.reach_file_eof()
 
         obj = LineObject(filename, line_no, line)
         return obj
+
+    def reach_file_eof(self):
+        self.readers.popleft()
+
+        if not self.readers:
+            self.is_eof = True
+        else:
+            self.n_lines = 0
 
     def close(self):
         for reader in self.readers:
@@ -115,8 +119,11 @@ class LineFetcher(Thread):
                 if self.is_eof or self.is_finished:
                     break
 
-                obj = self.fetch_one_line()
-                self.data_queue.put(obj)
+                try:
+                    obj = self.fetch_one_line()
+                    self.data_queue.put(obj)
+                except StopIteration:
+                    break
 
             if self.is_eof or self.is_finished:
                 break
@@ -155,8 +162,7 @@ class LineLoader(Loader):
         self.skiprows = skiprows
 
         self._count_load = 0
-        self.tot_line = (sum(1 for filename in self.filenames for _ in open(filename))
-                         - self.skiprows * len(self.filenames))
+        self.tot_line = self.calculate_tot_line() - self.skiprows * len(self.filenames)
 
         if parallel:
             self.manager = None
@@ -191,9 +197,12 @@ class LineLoader(Loader):
     def get_line_reader(self, filename):
         return TextFileLineReader(filename, skiprows=self.skiprows, **self.kwargs)
 
+    def calculate_tot_line(self):
+        return sum(1 for filename in self.filenames for _ in open(filename, **self.kwargs))
+
     def reset(self):
         self._count_load = 0
-        self.tot_line = sum(1 for filename in self.filenames for _ in open(filename))
+        self.tot_line = self.calculate_tot_line() - self.skiprows * len(self.filenames)
 
         if self.parallel:
             self.fetcher.close()
@@ -228,7 +237,8 @@ class LineLoader(Loader):
                 return data
 
             except queue.Empty:
-                pass
+                if self.fetcher.is_finished:
+                    break
 
     def do_load(self):
         if self.parallel:
