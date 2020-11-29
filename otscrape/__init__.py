@@ -2,7 +2,7 @@ from otscrape.core.base.extractor import extractor, Attribute, Extractor
 from otscrape.core.base.state import PickleState
 
 from otscrape.core.extractor import (Raw, RequestText, RequestStatusCode, JSON, DictPath, XPath, ZipDict, RegEx,
-                                     Chain, Map, Lambda, TextSoup, SoupFindAll, SoupSelect,
+                                     Chain, Map, Lambda, StarLambda, TextSoup, SoupFindAll, SoupSelect,
                                      FileContent, FileName, FileLineNumber)
 
 from otscrape.core.loader import SimpleRequestLoader, DummyLoader, LineLoader, JSONFileLoader, CSVFileLoader

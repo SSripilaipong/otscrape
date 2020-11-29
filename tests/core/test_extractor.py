@@ -68,6 +68,21 @@ def test_Lambda():
     assert p.get_data() == {'with_0': ['1.5', '2.4', '0'], 'to_float': [1.5, 2.4], 'error': []}
 
 
+def test_StarLambda():
+    class TestPage(DataPage):
+        array = DictPath('/array')
+        data = DictPath('/dict')
+
+        array_to_float = Map(float, array)
+
+        sum_array = StarLambda(lambda a, b: a + b, array_to_float)
+        sum_dict = StarLambda(lambda a, b: a + b, data)
+
+    p = TestPage({'array': ['1.5', '2.4'], 'dict': {'a': 1.5, 'b': 2.4}})
+
+    assert p['sum_array'] == p['sum_dict'] == 3.9
+
+
 def test_SoupFindAll_with_text():
     class TestPageBase(PageBase):
         loader = DummyLoader('<html><body><h1 id="head1">Hello World</h1><h1 id="head2">otscrape!</h1></body></html>')
