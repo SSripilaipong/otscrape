@@ -46,25 +46,41 @@ def test_chain():
 
 
 def test_Map():
+    class First(Extractor):
+        def extract(self, page, cache):
+            return page[self.target][0]
+
     class TestPage(DataPage):
         to_int = Map(int, replace_error=0)
         to_float = Map(float)
         to_float_to_int = Map(int, to_float)
 
+        to_float_to_str = Map(str, to_float)
+        to_float_first_to_int = Map(First(), to_float_to_str)
+
     p = TestPage(['1.5', '2.4', '3'])
 
-    assert p.get_data() == {'to_int': [0, 0, 3], 'to_float': [1.5, 2.4, 3.0], 'to_float_to_int': [1, 2, 3]}
+    assert p['to_int'] == [0, 0, 3]
+    assert p['to_float'] == [1.5, 2.4, 3.0]
+    assert p['to_float_to_int'] == [1, 2, 3]
+    assert p['to_float_first_to_int'] == ['1', '2', '3']
 
 
 def test_StarMap():
+    class AddOne(Extractor):
+        def extract(self, page, cache):
+            return page[self.target] + 1
+
     class TestPage(DataPage):
         add = StarMap(lambda *, a, b: a+b, replace_error=0)
+        add_one = StarMap(AddOne(), add)
 
     p = TestPage([{'a': 1, 'b': 2},
                   {'a': 2, 'b': 4},
                   {'a': 3, 'b': 9}])
 
     assert p['add'] == [3, 6, 12]
+    assert p['add_one'] == [4, 7, 13]
 
 
 def test_Lambda():
