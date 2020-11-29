@@ -45,7 +45,7 @@ class StarMap(MapBase):
 
 
 class ChainMap(Map):
-    def __init__(self, extractors: List[Union[Extractor, Callable]], *, target=None, project=False):
+    def __init__(self, extractors: List[Union[Extractor, Callable]], *, target=None, project=True):
         func = Chain(extractors)
 
         super().__init__(func, target=target, project=project)

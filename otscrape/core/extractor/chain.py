@@ -5,7 +5,7 @@ from .lambda_ import Lambda
 
 
 class Chain(Extractor):
-    def __init__(self, extractors: List[Union[Extractor, Callable]], *, target=None, project=False):
+    def __init__(self, extractors: List[Union[Extractor, Callable]], *, target=None, project=True):
         super().__init__(target=target, project=project)
 
         self.extractors = [e if isinstance(e, Extractor) else Lambda(e) for e in extractors]
