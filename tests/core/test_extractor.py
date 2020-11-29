@@ -47,13 +47,13 @@ def test_chain():
 
 def test_Map():
     class TestPage(DataPage):
-        to_int = Map(int, replace_error=[])
+        to_int = Map(int, replace_error=0)
         to_float = Map(float)
         to_float_to_int = Map(int, to_float)
 
-    p = TestPage(['1.5', '2.4'])
+    p = TestPage(['1.5', '2.4', '3'])
 
-    assert p.get_data() == {'to_int': [], 'to_float': [1.5, 2.4], 'to_float_to_int': [1, 2]}
+    assert p.get_data() == {'to_int': [0, 0, 3], 'to_float': [1.5, 2.4, 3.0], 'to_float_to_int': [1, 2, 3]}
 
 
 def test_Lambda():

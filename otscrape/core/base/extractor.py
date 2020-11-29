@@ -11,7 +11,7 @@ class ExtractorBase(WillFail):
         return self._run_will_fail(page)
 
     def _run(self, page):
-        return self.extract(page, page._cached)
+        return self.extract(page, getattr(page, '_cached', {}))
 
     def extract(self, page, cache):
         raise NotImplementedError()
