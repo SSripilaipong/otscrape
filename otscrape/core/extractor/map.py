@@ -1,7 +1,9 @@
+from typing import List, Callable, Union
 from collections.abc import Iterable
 
 from otscrape.core.base.extractor import Extractor
 from .lambda_ import Lambda, StarLambda
+from .chain import Chain
 
 
 class MapBase(Extractor):
@@ -40,3 +42,13 @@ class StarMap(MapBase):
 
     def __str__(self):
         return f'StarMap({self.func.__name__})'
+
+
+class ChainMap(Map):
+    def __init__(self, extractors: List[Union[Extractor, Callable]], *, target=None, project=False):
+        func = Chain(extractors)
+
+        super().__init__(func, target=target, project=project)
+
+    def __str__(self):
+        return f'ChainMap({self.func.__name__})'

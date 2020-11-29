@@ -1,9 +1,37 @@
 from requests import Response
 from tempfile import NamedTemporaryFile
 
-from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, StarMap, Lambda, StarLambda, Extractor, JSON,
+from otscrape import (PageBase, Raw, DummyLoader, Chain, ChainMap, Map, StarMap, Lambda, StarLambda, Extractor, JSON,
                       SoupFindAll, SoupSelect, extractor,
                       FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
+
+
+class Strip(Extractor):
+    def extract(self, page, cache):
+        return page[self.target].strip()
+
+
+class Pad0(Extractor):
+    def __init__(self, target=None, n=1, *args, **kwargs):
+        super().__init__(target=target, *args, **kwargs)
+        self.n = n
+
+    def extract(self, page, cache):
+        return page[self.target] + ('0' * self.n)
+
+
+class First(Extractor):
+    def extract(self, page, cache):
+        return page[self.target][0]
+
+
+class Last(Extractor):
+    def __init__(self, target=None, n=1, *args, **kwargs):
+        super().__init__(target=target, *args, **kwargs)
+        self.n = n
+
+    def extract(self, page, cache):
+        return page[self.target][-self.n:]
 
 
 def test_Raw():
@@ -16,26 +44,6 @@ def test_Raw():
 
 
 def test_Chain():
-    class Strip(Extractor):
-        def extract(self, page, cache):
-            return page[self.target].strip()
-
-    class Pad0(Extractor):
-        def __init__(self, target=None, n=1, *args, **kwargs):
-            super().__init__(target=target, *args, **kwargs)
-            self.n = n
-
-        def extract(self, page, cache):
-            return page[self.target] + ('0' * self.n)
-
-    class Last(Extractor):
-        def __init__(self, target=None, n=1, *args, **kwargs):
-            super().__init__(target=target, *args, **kwargs)
-            self.n = n
-
-        def extract(self, page, cache):
-            return page[self.target][-self.n:]
-
     class TestPage(DataPage):
         result = Chain([JSON(path='/data'), Strip(), Pad0(n=2), Last(n=4)])
         error = Chain([JSON(path='/data'), Strip(), Lambda(lambda t: t[20], replace_error='error'), Last(n=4)])
@@ -48,11 +56,25 @@ def test_Chain():
     assert p['upper'] == 'CHAIN'
 
 
-def test_Map():
-    class First(Extractor):
-        def extract(self, page, cache):
-            return page[self.target][0]
+def test_ChainMap():
+    class TestPage(DataPage):
+        data = ChainMap([JSON(path='/data'), Strip(), Pad0(n=2), Last(n=4)])
+        errors = ChainMap([JSON(path='/data'), Strip(),
+                           Lambda(lambda t: str(int(t)), replace_error='error'), Last(n=4)])
+        names = ChainMap([JSON(path='/name'), str.upper])
 
+    p = TestPage([
+        '{"data":"   abcd   ","name":"One"}',
+        '{"data":"   efgh   ","name":"Two"}',
+        '{"data":"   1234   ","name":"Scrape"}',
+    ])
+
+    assert p['data'] == ['cd00', 'gh00', '3400']
+    assert p['errors'] == ['rror', 'rror', '1234']
+    assert p['names'] == ['ONE', 'TWO', 'SCRAPE']
+
+
+def test_Map():
     class TestPage(DataPage):
         to_int = Map(int, replace_error=0)
         to_float = Map(float)
