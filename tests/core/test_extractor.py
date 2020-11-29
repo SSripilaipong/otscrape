@@ -1,7 +1,8 @@
 from requests import Response
 from tempfile import NamedTemporaryFile
 
-from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, Extractor, JSON, SoupFindAll, SoupSelect, extractor,
+from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, Lambda, Extractor, JSON,
+                      SoupFindAll, SoupSelect, extractor,
                       FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
 
 
@@ -53,6 +54,18 @@ def test_map():
     p = TestPage(['1.5', '2.4'])
 
     assert p.get_data() == {'to_int': None, 'to_float': [1.5, 2.4], 'to_float_to_int': [1, 2]}
+
+
+def test_Lambda():
+    class TestPage(DataPage):
+        with_0 = Lambda(lambda x: x + ['0'])
+        to_float = Lambda(lambda x: list(map(float, x)))
+
+        error = Lambda(lambda x: x/0, replace_error=[])
+
+    p = TestPage(['1.5', '2.4'])
+
+    assert p.get_data() == {'with_0': ['1.5', '2.4', '0'], 'to_float': [1.5, 2.4], 'error': []}
 
 
 def test_SoupFindAll_with_text():

@@ -7,5 +7,6 @@ from .xpath import XPath
 from .nested import ZipDict
 from .chain import Chain
 from .map import Map
+from .lambda_ import Lambda
 from .soup import SoupFindAll, SoupSelect
 from .file import FileContent, FileName, FileLineNumber
