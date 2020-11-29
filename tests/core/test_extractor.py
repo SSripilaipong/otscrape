@@ -1,7 +1,7 @@
 from requests import Response
 from tempfile import NamedTemporaryFile
 
-from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, Lambda, StarLambda, Extractor, JSON,
+from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, StarMap, Lambda, StarLambda, Extractor, JSON,
                       SoupFindAll, SoupSelect, extractor,
                       FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
 
@@ -54,6 +54,17 @@ def test_Map():
     p = TestPage(['1.5', '2.4', '3'])
 
     assert p.get_data() == {'to_int': [0, 0, 3], 'to_float': [1.5, 2.4, 3.0], 'to_float_to_int': [1, 2, 3]}
+
+
+def test_StarMap():
+    class TestPage(DataPage):
+        add = StarMap(lambda *, a, b: a+b, replace_error=0)
+
+    p = TestPage([{'a': 1, 'b': 2},
+                  {'a': 2, 'b': 4},
+                  {'a': 3, 'b': 9}])
+
+    assert p['add'] == [3, 6, 12]
 
 
 def test_Lambda():
