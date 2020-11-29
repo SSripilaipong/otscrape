@@ -6,5 +6,6 @@ from .dict import DictPath
 from .xpath import XPath
 from .nested import ZipDict
 from .chain import chain
+from .map import map
 from .soup import SoupFindAll, SoupSelect
 from .file import FileContent, FileName, FileLineNumber

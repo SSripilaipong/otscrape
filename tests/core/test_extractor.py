@@ -3,6 +3,7 @@ from tempfile import NamedTemporaryFile
 
 from otscrape import (PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, SoupSelect, extractor,
                       FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
+import otscrape as ot
 
 
 def test_Raw():
@@ -42,6 +43,17 @@ def test_chain():
 
     p = TestPageBase()
     assert p['result'] == 'cd00'
+
+
+def test_map():
+    class TestPage(DataPage):
+        to_int = ot.map(int)
+        to_float = ot.map(float)
+        to_float_to_int = ot.map(int, to_float)
+
+    p = TestPage(['1.5', '2.4'])
+
+    assert p.get_data() == {'to_int': None, 'to_float': [1.5, 2.4], 'to_float_to_int': [1, 2]}
 
 
 def test_SoupFindAll_with_text():
