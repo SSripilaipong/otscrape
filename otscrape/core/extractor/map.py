@@ -3,8 +3,8 @@ from otscrape import Extractor
 
 
 class Map(Extractor):
-    def __init__(self, func, target=None, project=True):
-        super().__init__(target=target, project=project)
+    def __init__(self, func, target=None, project=True, replace_error=None):
+        super().__init__(target=target, project=project, replace_error=replace_error)
         self.func = func
 
     def extract(self, page, cache):
