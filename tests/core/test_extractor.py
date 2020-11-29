@@ -1,9 +1,8 @@
 from requests import Response
 from tempfile import NamedTemporaryFile
 
-from otscrape import (PageBase, Raw, DummyLoader, chain, Extractor, JSON, SoupFindAll, SoupSelect, extractor,
+from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, Extractor, JSON, SoupFindAll, SoupSelect, extractor,
                       FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
-import otscrape as ot
 
 
 def test_Raw():
@@ -39,7 +38,7 @@ def test_chain():
     class TestPageBase(PageBase):
         loader = DummyLoader('{"data":"   abcd   ","name":"Chain"}')
 
-        result = chain([JSON(path='/data'), Strip(), Pad0(n=2), Last(n=4)])
+        result = Chain([JSON(path='/data'), Strip(), Pad0(n=2), Last(n=4)])
 
     p = TestPageBase()
     assert p['result'] == 'cd00'
@@ -47,9 +46,9 @@ def test_chain():
 
 def test_map():
     class TestPage(DataPage):
-        to_int = ot.map(int)
-        to_float = ot.map(float)
-        to_float_to_int = ot.map(int, to_float)
+        to_int = Map(int)
+        to_float = Map(float)
+        to_float_to_int = Map(int, to_float)
 
     p = TestPage(['1.5', '2.4'])
 

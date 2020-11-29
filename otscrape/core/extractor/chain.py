@@ -2,8 +2,8 @@ from typing import List
 from otscrape import Extractor
 
 
-class ChainedExtractor(Extractor):
-    def __init__(self, extractors, target=None, project=False):
+class Chain(Extractor):
+    def __init__(self, extractors: List[Extractor], target=None, project=False):
         super().__init__(target=target, project=project)
 
         self.extractors = extractors
@@ -16,9 +16,4 @@ class ChainedExtractor(Extractor):
         return result
 
     def __str__(self):
-        return f'ChainedExtractor({self.extractors})'
-
-
-def chain(extractors: List[Extractor], target=None, project=True):
-
-    return ChainedExtractor(extractors, target=target, project=project)
+        return f'Chain({self.extractors})'
