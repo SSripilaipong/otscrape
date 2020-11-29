@@ -15,7 +15,7 @@ def test_Raw():
     assert p.get_data() == {'raw_project': 'abcd'}
 
 
-def test_chain():
+def test_Chain():
     class Strip(Extractor):
         def extract(self, page, cache):
             return page[self.target].strip()
@@ -39,10 +39,13 @@ def test_chain():
     class TestPage(DataPage):
         result = Chain([JSON(path='/data'), Strip(), Pad0(n=2), Last(n=4)])
         error = Chain([JSON(path='/data'), Strip(), Lambda(lambda t: t[20], replace_error='error'), Last(n=4)])
+        upper = Chain([JSON(path='/name'), str.upper])
 
     p = TestPage('{"data":"   abcd   ","name":"Chain"}')
+
     assert p['result'] == 'cd00'
     assert p['error'] == 'rror'
+    assert p['upper'] == 'CHAIN'
 
 
 def test_Map():

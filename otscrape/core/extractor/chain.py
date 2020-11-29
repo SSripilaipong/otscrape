@@ -1,12 +1,14 @@
-from typing import List
-from otscrape import Extractor
+from typing import List, Callable, Union
+
+from otscrape.core.base.extractor import Extractor
+from .lambda_ import Lambda
 
 
 class Chain(Extractor):
-    def __init__(self, extractors: List[Extractor], *, target=None, project=False):
+    def __init__(self, extractors: List[Union[Extractor, Callable]], *, target=None, project=False):
         super().__init__(target=target, project=project)
 
-        self.extractors = extractors
+        self.extractors = [e if isinstance(e, Extractor) else Lambda(e) for e in extractors]
 
     def extract(self, page, cache):
         result = page[self.target]
