@@ -3,7 +3,7 @@ from otscrape import Extractor
 
 
 class Chain(Extractor):
-    def __init__(self, extractors: List[Extractor], target=None, project=False):
+    def __init__(self, extractors: List[Extractor], *, target=None, project=False):
         super().__init__(target=target, project=project)
 
         self.extractors = extractors
