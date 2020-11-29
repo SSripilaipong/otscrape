@@ -12,7 +12,7 @@ class Chain(Extractor):
         result = page[self.target]
         for e in self.extractors:
             result = {e.target: result}
-            result = e.extract(result, {})
+            result = e(result)
         return result
 
     def __str__(self):

@@ -1,7 +1,7 @@
 from requests import Response
 from tempfile import NamedTemporaryFile
 
-from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, Lambda, Extractor, JSON,
+from otscrape import (PageBase, Raw, DummyLoader, Chain, Map, Lambda, StarLambda, Extractor, JSON,
                       SoupFindAll, SoupSelect, extractor,
                       FileLinePage, FileContent, FileLineNumber, FileName, DataPage, DictPath)
 
@@ -36,13 +36,13 @@ def test_chain():
         def extract(self, page, cache):
             return page[self.target][-self.n:]
 
-    class TestPageBase(PageBase):
-        loader = DummyLoader('{"data":"   abcd   ","name":"Chain"}')
-
+    class TestPage(DataPage):
         result = Chain([JSON(path='/data'), Strip(), Pad0(n=2), Last(n=4)])
+        error = Chain([JSON(path='/data'), Strip(), Lambda(lambda t: t[20], replace_error='error'), Last(n=4)])
 
-    p = TestPageBase()
+    p = TestPage('{"data":"   abcd   ","name":"Chain"}')
     assert p['result'] == 'cd00'
+    assert p['error'] == 'rror'
 
 
 def test_Map():
