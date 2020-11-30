@@ -20,6 +20,7 @@ class ListingPage(ot.DataPage):
     children = ot.Chain([ot.DictPath('/children'), ot.Map(ContentPage)])
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_scrape():
     df = ot.scrape_pandas(ListingPage({'page': i, 'children': list(range(i, i+5))}) for i in range(5))

@@ -30,6 +30,7 @@ def test_exporter():
         assert sum(1 for x in result if x == i) == -abs(5-i) + 5
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_exporter_with_workers():
     with NamedTemporaryFile('w', suffix='.json') as f:
@@ -48,6 +49,7 @@ def test_exporter_with_workers():
         assert sum(1 for x in result if x == i) == -abs(5-i) + 5
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_exporter_shorthand_with_workers():
     with NamedTemporaryFile('w', suffix='.json') as f:

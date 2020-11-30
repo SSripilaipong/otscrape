@@ -14,6 +14,7 @@ class ListingPage(ot.DataPage):
     children = ot.Chain([ot.DictPath('/children'), ot.Map(ContentPage)])
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_scrape_iter_buffer():
     with ot.Workers(3) as w:
@@ -31,6 +32,7 @@ def test_scrape_iter_buffer():
         assert sum(1 for x in result if x == i) == -abs(5-i) + 5
 
 
+@pytest.mark.slow
 @pytest.mark.integration
 def test_scrape_faster1():
     def delay_load(data):
@@ -59,10 +61,3 @@ def test_scrape_faster1():
         assert time1 < time0
     finally:
         ContentPage.loader.do_load = do_load_ori
-
-
-@pytest.mark.integration
-def test_scrape_faster2():
-    pages = [ContentPage(888).get_data() for _ in range(20)]
-
-    assert pages == [{'data': 888, 'add_one': 889}] * 20
