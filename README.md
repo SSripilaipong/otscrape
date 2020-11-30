@@ -7,5 +7,3 @@ one-two-scrape
 
 A lightweight yet powerful scraping module. Well-designed for readability and reusability. 
 Compatible with popular data science frameworks and modules (eg. pandas, Jupyter).
-
-
