@@ -1,14 +1,17 @@
+import traceback
 import time
 from copy import deepcopy
+from threading import Lock
 import requests
 
-from otscrape.core.base.mixins import NoFailMixin
+from otscrape.core.base.abstract import NoFailMixin
 from otscrape.core.base.loader import Loader
+from otscrape.core.base.exception import LoadingFailedException
 
 
 class RequestLoaderBase(Loader):
-    def __init__(self, method=None, accept_status_codes=(200,), max_retries=0, delay=0, **kwargs):
-        super().__init__()
+    def __init__(self, method=None,  accept_status_codes=(200,), rate_limit='', max_retries=0, delay=0, **kwargs):
+        super().__init__(rate_limit=rate_limit)
 
         self.method = method or 'GET'
         self.kwargs = kwargs or {}
@@ -21,24 +24,27 @@ class RequestLoaderBase(Loader):
         result = cls.__new__(cls)
         memo[id(self)] = result
         for k, v in self.__dict__.items():
-            setattr(result, k, deepcopy(v, memo))
+            if isinstance(v, Lock):
+                setattr(result, k, v)  # share locks
+            else:
+                setattr(result, k, deepcopy(v, memo))
         return result
 
-    def post(self, **kwargs):
+    def POST(self, **kwargs):
         result = deepcopy(self)
         result.method = 'POST'
         for k, v in kwargs.items():
             setattr(result, k, v)
         return result
 
-    def get(self, **kwargs):
+    def GET(self, **kwargs):
         result = deepcopy(self)
         result.method = 'GET'
         for k, v in kwargs.items():
             setattr(result, k, v)
         return result
 
-    def make_request(self, url, **kwargs):
+    def do_load(self, url, **kwargs):
         kwargs_update = dict(self.kwargs)
         kwargs_update.update(kwargs)
         kwargs_update['url'] = url
@@ -52,39 +58,12 @@ class RequestLoaderBase(Loader):
                 resp.raise_for_status()
             except Exception as e:
                 if count >= self.max_retries:
-                    raise e
+                    traceback.print_exception(type(e), e, e.__traceback__)
+                    raise LoadingFailedException(str(e))
             count += 1
 
             if self.delay:
                 time.sleep(self.delay)
-
-    def __call__(self, url, **kwargs):
-        self.on_requesting()
-
-        try:
-            return self.make_request(url, **kwargs)
-        except Exception as e:
-            return self.on_request_error(e)
-        finally:
-            self.on_requested()
-
-    def _on_requesting(self):
-        return self.on_requesting()
-
-    def _on_requested(self):
-        return self.on_requested()
-
-    def _on_request_error(self, exception):
-        return self.on_request_error(exception)
-
-    def on_requesting(self):
-        pass
-
-    def on_requested(self):
-        pass
-
-    def on_request_error(self, exception):
-        raise exception
 
 
 class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
@@ -98,5 +77,5 @@ class SimpleRequestLoader(NoFailMixin, RequestLoaderBase):
     def _return_value_when_fail(self):
         return self.replace_error
 
-    def on_request_error(self, *args, **kwargs):
-        return self.on_error(*args, **kwargs)
+    def on_error(self, *args, **kwargs):
+        return super().on_error(*args, **kwargs)

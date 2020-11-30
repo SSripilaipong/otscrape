@@ -1,33 +1,57 @@
-from queue import Queue
+from typing import Union
+from otscrape.core.base.state import MemoryState
+from otscrape.core.base.worker import WorkersBase
 
-from otscrape.core.base.worker import ThreadWorkersBase
+from .command import ScrapeCommand, ExportCommand
 
 
-class Workers(ThreadWorkersBase):
-    def __init__(self, n_workers, buffer_size=0, queue_size=0, queue_timeout=3):
-        super().__init__(n_workers=n_workers, queue_size=queue_size, queue_timeout=queue_timeout)
+class StatefulList:
+    def __init__(self, workers):
+        self.workers = workers
 
-        self.buffer_size = buffer_size  # type: int
-        self.buffer = None
+        self._list = []
+        self._state_list = []
 
-    def open(self):
-        super().open()
+        self.state = self.workers.current_state.substate(suffix='list')  # type: MemoryState
 
-        self.buffer = Queue(maxsize=self.buffer_size)
-        return self
+    def append(self, x):
+        ss = self.workers.current_state.substate(x)
+        self.state.wait_for(ss)
 
-    def _scrape(self, page, exporter=None):
-        page.fetch()
-        if exporter:
-            exporter(page)
+        self._list.append(x)
+        self._state_list.append(ss)
+
+    def __iter__(self):
+        for i, x in enumerate(self.workers.iter(self._list)):
+            ss = self._state_list[i]
+            ss.wait_for(self.workers.current_state)
+
+            yield x
+
+        self._list = []
+        self._state_list = []
+
+
+class Workers(WorkersBase):
+    def scrape(self, page, buffer='FIFO', buffer_size=0, buffer_timeout=3.0):
+        if self.current_state:
+            state = self.current_state.substate(suffix='scrape')  # type: Union[MemoryState, None]
         else:
-            self.buffer.put(page)
+            state = None
+        command = ScrapeCommand(self, buffer, buffer_size, buffer_timeout, state=state)
+        return self._executor.execute(command, page, state=state)
 
-    def scrape(self, page, exporter=None):
-        self.queue.put((self._scrape, {'page': page, 'exporter': exporter}))
+    def export(self, page, exporter, **kwargs):
+        if self.current_state:
+            state = self.current_state.substate(suffix='export')  # type: Union[MemoryState, None]
+        else:
+            state = None
+        command = ExportCommand(exporter, self._exporter_cache, state=state, **kwargs)
+        return self._executor.execute(command, page, state=state)
 
-    def iter_results(self):
-        while not self.buffer.empty() or not self.queue.empty() or self.count_available_workers() < self.n_workers:
-            if self.buffer:
-                yield self.buffer.get().get_data()
-                self.buffer.task_done()
+    def list(self, elements=None):
+        elements = elements or ()
+        x = StatefulList(workers=self)
+        for e in elements:
+            x.append(e)
+        return x
