@@ -1,3 +1,4 @@
+import time
 from threading import Lock
 
 from otscrape.core.base.wrapper import PageWrapper
@@ -64,26 +65,46 @@ class Buffer:
         return not obj.exception
 
     def _iter(self):
+        count_yield = 0
+        count_loop = 0
+
         while not self.empty() or self.count_remaining_tasks():
-            try:
-                obj = self.get()
-            except BufferRetryException:
-                continue
+            while not self.empty() or self.count_remaining_tasks():
+                try:
+                    obj = self.get()
+                except BufferRetryException:
+                    continue
+                count_loop += 1
 
-            self.task_done()
-
-            if self._iter_filter(obj):
-                yield obj
-
-        if not self.empty():
-            try:
-                obj = self.get()
                 self.task_done()
 
                 if self._iter_filter(obj):
+                    count_yield += 1
                     yield obj
-            except BufferRetryException:
-                pass
+
+            time.sleep(0.1)
+
+        # count_if = 0
+        # while not self.empty() or self.count_remaining_tasks():
+        #     try:
+        #         obj = self.get()
+        #         self.task_done()
+        #
+        #         count_if += 1
+        #         if self._iter_filter(obj):
+        #             count_yield += 1
+        #             yield obj
+        #     except BufferRetryException:
+        #         pass
+
+        print('total:', self.total_tasks)
+        print('task_count:', self._task_count)
+        print('count_yield:', count_yield)
+        print('count_loop:', count_loop)
+        print('queue_empty:', self.empty())
+        # print('count_if:', count_if)
+        print('remaining:', self.count_remaining_tasks())
+        print()
 
     def __iter__(self):
         if not self.workers.current_state:
