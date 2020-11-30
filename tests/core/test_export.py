@@ -15,6 +15,7 @@ class ListingPage(ot.DataPage):
     children = ot.Chain([ot.DictPath('/children'), ot.Map(ContentPage)])
 
 
+@pytest.mark.ot_exporter
 def test_exporter():
     with NamedTemporaryFile('w', suffix='.json') as f:
         with ot.JSONExporter(f.name) as export:
@@ -32,6 +33,8 @@ def test_exporter():
 
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.ot_exporter
+@pytest.mark.ot_mp
 def test_exporter_with_workers():
     with NamedTemporaryFile('w', suffix='.json') as f:
         with ot.JSONExporter(f.name, parallel=True) as exporter, ot.Workers(3) as w:
@@ -51,6 +54,8 @@ def test_exporter_with_workers():
 
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.ot_exporter
+@pytest.mark.ot_mp
 def test_exporter_shorthand_with_workers():
     with NamedTemporaryFile('w', suffix='.json') as f:
         with ot.Workers(3) as w:

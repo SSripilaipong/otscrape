@@ -32,6 +32,7 @@ def test_sequential():
 
 
 @pytest.mark.slow
+@pytest.mark.ot_mp
 def test_workers():
     numbers = set()
 

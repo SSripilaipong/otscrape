@@ -22,6 +22,7 @@ class ListingPage(ot.DataPage):
 
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.ot_mp
 def test_scrape():
     df = ot.scrape_pandas(ListingPage({'page': i, 'children': list(range(i, i+5))}) for i in range(5))
     assert df.shape == (5, 2)

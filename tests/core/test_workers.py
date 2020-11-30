@@ -16,6 +16,7 @@ class ListingPage(ot.DataPage):
 
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.ot_mp
 def test_scrape_iter_buffer():
     with ot.Workers(3) as w:
         buffer = w.scrape(ListingPage({'page': i, 'children': list(range(i, i+5))}) for i in range(5))
@@ -34,6 +35,7 @@ def test_scrape_iter_buffer():
 
 @pytest.mark.slow
 @pytest.mark.integration
+@pytest.mark.ot_mp
 def test_scrape_faster1():
     def delay_load(data):
         time.sleep(0.1)
