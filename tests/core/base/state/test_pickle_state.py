@@ -84,7 +84,7 @@ def run_2loop(filename, stop_at1=None, stop_at2=None, replace=False, assert_sequ
 
     enter_loop1, enter_loop2 = False, False
 
-    with ot.Workers(7, state=filename, restart=replace) as w:
+    with ot.Workers(3, state=filename, restart=replace) as w:
         ll = w.list()
 
         for i, n in enumerate(w.iter(range(1, 21))):
@@ -162,7 +162,7 @@ def test_2loop_with_list():
 
 
 def run_export(filename, export_filename, stop_at, assert_unique, size=10, replace=False):
-    with ot.Workers(7, state=filename, restart=replace) as w:
+    with ot.Workers(3, state=filename, restart=replace) as w:
         buffer = w.scrape(ListingPage(i) for i in range(1, size+1))
 
         for i, x in enumerate(buffer):
