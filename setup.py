@@ -5,11 +5,15 @@ from setuptools import setup
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-with open('README.md', encoding='utf-8') as f:
-    LONG_DESCRIPTION = f.read()
+try:
+    import pypandoc
+    LONG_DESCRIPTION = pypandoc.convert('README.md', 'rst')
+except(IOError, ImportError):
+    LONG_DESCRIPTION = open('README.md').read()
+
 
 NAME = 'one-two-scrape'
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 URL = 'https://github.com/SSripilaipong/otscrape'
 LICENSE = 'MIT'
 AUTHOR = 'SSripilaipong'
