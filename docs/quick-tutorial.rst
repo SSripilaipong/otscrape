@@ -1,6 +1,14 @@
 Quick Tutorial
 ================
 
+Get Started
+------------
+
+One can write scripts in file `.py` and execute using python command
+or use interactive Python editors, eg. IPython, Jupyter Notebook, or Google Colab.
+
+For Windows users, Google Colab is recommended to avoid operating system issues, or see this note: `Running otscrape on Windows <#>`_
+
 Installation
 -------------
 
@@ -10,14 +18,8 @@ using pip:
 
     $ pip install one-two-scrape
 
-
-Get Started
-------------
-
-One can write scripts in file `.py` and execute using python command
-or use interactive Python editors, eg. IPython, Jupyter Notebook, or Google Colab.
-
-For Windows users, Google Colab is recommended to avoid operating system issues, or see this note: `Running otscrape on Windows <#>`_
+Components
+-----------
 
 Page
 `````

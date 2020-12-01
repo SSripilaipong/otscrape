@@ -11,14 +11,6 @@ Requirements
     * Python 3.6+
     * Works on Linux, Windows, macOS, BSD
 
-Installation
-------------
-using pip:
-
-.. code-block:: shell
-
-    $ pip install one-two-scrape
-
 
 Contents
 --------
