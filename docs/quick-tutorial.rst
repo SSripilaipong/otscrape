@@ -10,13 +10,25 @@ or use interactive Python editors, eg. IPython, Jupyter Notebook, or Google Cola
 For Windows users, Google Colab is recommended to avoid operating system issues, or see this note: `Running otscrape on Windows <#>`_
 
 Installation
--------------
+--------------
 
-using pip:
+Requirements
+``````````````
+
+.. hlist::
+    :columns: 1
+
+    * Python 3.6+
+    * Works on Linux, Windows, macOS, BSD
+
+
+Using Pip
+```````````
 
 .. code-block:: shell
 
     $ pip install one-two-scrape
+
 
 Components
 -----------
