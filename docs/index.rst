@@ -1,5 +1,5 @@
 **one-two-scrape documentation**
-================================
+=================================
 
 A lightweight yet powerful scraping module. Well-designed for readability and reusability. Compatible with popular data science frameworks and modules (eg. pandas, Jupyter, Google Colab).
 
@@ -14,6 +14,8 @@ Requirements
 Installation
 ------------
 using pip:
+
+.. code-block:: shell
 
     $ pip install one-two-scrape
 
