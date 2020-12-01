@@ -6,7 +6,7 @@ from .request import RequestText
 
 
 class XPath(Extractor):
-    def __init__(self, target=None, xpath='.', *, only_first=False, encoding=None, project=True, replace_error=None):
+    def __init__(self, xpath='.', *, target=None, only_first=False, encoding=None, project=True, replace_error=None):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
         self.xpath = xpath
