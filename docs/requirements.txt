@@ -1,3 +1,4 @@
 pypandoc>=1.5
 Sphinx>=3.3.1
 nbsphinx>=0.8.0
+murray>=0.6.4

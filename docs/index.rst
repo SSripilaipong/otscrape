@@ -4,7 +4,7 @@
 A lightweight yet powerful scraping module. Well-designed for readability and reusability. Compatible with popular data science frameworks and modules (eg. pandas, Jupyter, Google Colab).
 
 Requirements
-============
+------------
 .. hlist::
     :columns: 1
 
@@ -12,14 +12,14 @@ Requirements
     * Works on Linux, Windows, macOS, BSD
 
 Installation
-============
+------------
 using pip:
 
     $ pip install one-two-scrape
 
 
 Contents
-========
+--------
 .. toctree::
     :maxdepth: 2
 
@@ -27,7 +27,7 @@ Contents
     license
 
 Indices and Tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
