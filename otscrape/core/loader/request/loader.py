@@ -44,10 +44,11 @@ class RequestLoaderBase(Loader):
             setattr(result, k, v)
         return result
 
-    def do_load(self, url, **kwargs):
+    def do_load(self, **kwargs):
         kwargs_update = dict(self.kwargs)
         kwargs_update.update(kwargs)
-        kwargs_update['url'] = url
+
+        assert 'url' in kwargs_update
 
         count = 0
         while True:
