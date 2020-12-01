@@ -50,7 +50,7 @@ By default, a `Page` will use `SimpleRequestLoader` as its `Loader`
 and parameters for the loader will be passed by attributes whose name starts with "_loader__".
 Please see `Page types and Loaders <#>`_ for more information on other possible loading methods.
 
-**Simple Page Example:**
+**[Example] Simple Page:**
 
 .. code-block:: python
 
@@ -76,7 +76,7 @@ extracting the result from `SimpleRequestLoader` which is implicitly defined by 
 When the `get_data` method is called, `MyPage` will load the raw data using its Loader.
 And all *projectable* attributes will be computed using the defined Extractors.
 
-**Explicitly passing parameters to Loader Example:**
+**[Example] Passing parameters to Loader:**
 
 .. code-block:: python
 
@@ -86,6 +86,7 @@ And all *projectable* attributes will be computed using the defined Extractors.
     class MyPage(ot.Page):
         _loader__method = 'GET'  # default is 'GET'
         _loader__rate_limit = '1/3'
+        _loader_max_retries = 5
 
         title  = ot.XPath('//title/text()', only_first=True)
         status = ot.RequestStatusCode()
@@ -100,12 +101,10 @@ And all *projectable* attributes will be computed using the defined Extractors.
     {'title': 'Python (programming language) - Wikipedia', 'status': 200}
     {'title': 'Web scraping - Wikipedia', 'status': 200}
 
+In the example above, parameters `method`, `max_retries`, and `rate_limit` will be passed to the `SimpleRequestLoader`
+by assigning attributes `_loader__method`, `_loader_max_retries` and `_loader__rate_limit`.
 
-In the example above, parameters `method` and `rate_limit` will be passed to the `SimpleRequestLoader`
-by assigning attributes `_loader__method` and `_loader__rate_limit`.
-
-
-**Make the Page more user-friendly Example:**
+**[Example] Make the Page more user-friendly:**
 
 To avoid passing full URLs every time an instance is created, one might override the constructor to do the job as follow.
 
@@ -128,6 +127,3 @@ To avoid passing full URLs every time an instance is created, one might override
 
     print(MyPage('Python_(programming_language)').get_data())
     print(MyPage('Web_scraping').get_data())
-
-In the example above, parameters `method`, `max_retries`, and `rate_limit` will be passed to the `SimpleRequestLoader`
-by assigning attributes `_loader__method`, `_loader_max_retries` and `_loader__rate_limit`.
