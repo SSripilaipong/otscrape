@@ -138,6 +138,6 @@ Extractor
 ``````````
 
 An `Extractor` are used for extracting information from raw data loaded in the `Page`.
-Commonly used extraction logics are provided such as XPath(), SoupSelect(), JSON(), or RegEx(), see the full list :ref:`Extractor Classes`
+Commonly used extraction logics are provided such as XPath(), SoupSelect(), JSON(), or RegEx(), see the full list :ref:`Extractor Classes and Functions`
 
 One can also implement a custom Extractor class by inheriting from class `Extractor`. See this note for more information: :ref:`Implementing a custom Extractor`
