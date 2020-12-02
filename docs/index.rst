@@ -6,9 +6,11 @@ A lightweight yet powerful scraping module. Well-designed for readability and re
 Contents
 --------
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 3
 
     quick-tutorial
+    useful-notes
+    reference
     license
 
 Indices and Tables

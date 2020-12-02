@@ -7,7 +7,7 @@ Get Started
 One can write scripts in file `.py` and execute using python command
 or use interactive Python editors, eg. IPython, Jupyter Notebook, or Google Colab.
 
-For Windows users, Google Colab is recommended to avoid operating system issues, or see this note: `Running otscrape on Windows <#>`_
+For Windows users, Google Colab is recommended to avoid operating system issues, or see this note: :ref:`Running otscrape on Windows`
 
 Installation
 --------------
@@ -30,8 +30,8 @@ Using Pip
     $ pip install one-two-scrape
 
 
-Components
------------
+Components Overview
+--------------------
 
 Page
 `````
@@ -44,15 +44,15 @@ and what will be computed from the *raw* data.
 So, a `Page` is composed of 2 types of components:
 
 :- Loader: handles the raw data loading logic
-:- Extractor: handles the attribute computing logic
+:- `Extractor`_: handles the attribute computing logic
 
 By default, a `Page` will use `SimpleRequestLoader` as its `Loader`
 and parameters for the loader will be passed by attributes whose name starts with "_loader__".
-Please see `Page types and Loaders <#>`_ for more information on other possible loading methods.
+Please see :ref:`Page types and Loaders` for more information on other possible loading methods.
 
 **[Example] Simple Page:**
 
-.. code-block:: python
+.. testcode::
 
     import otscrape as ot
 
@@ -65,7 +65,7 @@ Please see `Page types and Loaders <#>`_ for more information on other possible 
     print(MyPage('https://en.wikipedia.org/wiki/Python_(programming_language)').get_data())
     print(MyPage('https://en.wikipedia.org/wiki/Web_scraping').get_data())
 
-.. code-block::
+.. testoutput::
 
     {'title': 'Python (programming language) - Wikipedia', 'status': 200}
     {'title': 'Web scraping - Wikipedia', 'status': 200}
@@ -78,7 +78,8 @@ And all *projectable* attributes will be computed using the defined Extractors.
 
 **[Example] Passing parameters to Loader:**
 
-.. code-block:: python
+
+.. testcode::
 
     import otscrape as ot
 
@@ -95,8 +96,7 @@ And all *projectable* attributes will be computed using the defined Extractors.
     print(MyPage('https://en.wikipedia.org/wiki/Python_(programming_language)').get_data())
     print(MyPage('https://en.wikipedia.org/wiki/Web_scraping').get_data())
 
-
-.. code-block::
+.. testoutput::
 
     {'title': 'Python (programming language) - Wikipedia', 'status': 200}
     {'title': 'Web scraping - Wikipedia', 'status': 200}
@@ -108,7 +108,7 @@ by assigning attributes `_loader__method`, `_loader_max_retries` and `_loader__r
 
 To avoid passing full URLs every time an instance is created, one might override the constructor to do the job as follow.
 
-.. code-block:: python
+.. testcode::
 
     import otscrape as ot
 
@@ -127,3 +127,17 @@ To avoid passing full URLs every time an instance is created, one might override
 
     print(MyPage('Python_(programming_language)').get_data())
     print(MyPage('Web_scraping').get_data())
+
+.. testoutput::
+    :hide:
+
+    {'title': 'Python (programming language) - Wikipedia', 'status': 200}
+    {'title': 'Web scraping - Wikipedia', 'status': 200}
+
+Extractor
+``````````
+
+An `Extractor` are used for extracting information from raw data loaded in the `Page`.
+Commonly used extraction logics are provided such as XPath(), SoupSelect(), JSON(), or RegEx(), see the full list :ref:`Extractor Classes`
+
+One can also implement a custom Extractor class by inheriting from class `Extractor`. See this note for more information: :ref:`Implementing a custom Extractor`
