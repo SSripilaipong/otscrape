@@ -18,6 +18,11 @@ Page types and Loaders
 +-----------------+---------------------+-------+
 
 
+Extractor useful tips
+======================
+
+
+
 Implementing a custom Extractor
 ================================
 

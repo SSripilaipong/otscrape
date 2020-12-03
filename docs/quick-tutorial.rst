@@ -1,8 +1,9 @@
+================
 Quick Tutorial
 ================
 
 Get Started
-------------
+============
 
 One can write scripts in file `.py` and execute using python command
 or use interactive Python editors, eg. IPython, Jupyter Notebook, or Google Colab.
@@ -10,10 +11,10 @@ or use interactive Python editors, eg. IPython, Jupyter Notebook, or Google Cola
 For Windows users, Google Colab is recommended to avoid operating system issues, or see this note: :ref:`Running otscrape on Windows`
 
 Installation
---------------
+==============
 
 Requirements
-``````````````
+--------------
 
 .. hlist::
     :columns: 1
@@ -23,7 +24,7 @@ Requirements
 
 
 Using Pip
-```````````
+-----------
 
 .. code-block:: shell
 
@@ -31,10 +32,10 @@ Using Pip
 
 
 Components Overview
---------------------
+====================
 
 Page
-`````
+-----
 
 The main component that will be used when scraping and making any calculation with `otscrape` is a `Page`.
 
@@ -144,7 +145,7 @@ To avoid passing full URLs every time an instance is created, one might override
     {'title': 'Web scraping - Wikipedia', 'status': 200}
 
 Extractor
-``````````
+----------
 
 An `Extractor` are used for extracting information from raw data loaded in the `Page`.
 Commonly used extraction logics are provided such as XPath(), SoupSelect(), JSON(), or RegEx(), see the full list :ref:`Extractor Classes and Functions`
@@ -252,4 +253,70 @@ The replace value can be set using parameter `replace_error`.
 .. testoutput::
 
     {'title': 'TITLE ERROR'}
+
+
+For more tips on extractor usage, please see this note: :ref:`Extractor useful tips`
+
+For the full list of extractors, please see this reference: :ref:`Extractor Classes and Functions`
+
+
+Exporter
+---------
+
+An Exporter is a helper for exporting a page to external storage, eg. local file system, Database (comming soon), or Google Cloud Storage (comming soon)
+
+
+**[Example] Export a page to a JSON file**
+
+.. testsetup::
+
+    import tempfile
+
+    file = tempfile.NamedTemporaryFile('w', suffix='.json')
+    FILENAME = file.name
+
+
+.. testcode::
+
+    import otscrape as ot
+
+
+    class MyPage(ot.Page):
+        title  = ot.XPath('//title/text()', only_first=True)
+        first_word = ot.RegEx(r'(\w+)', only_first=True, select=0, target=title)
+
+        def __init__(self, keyword):
+            super().__init__('https://en.wikipedia.org/wiki/' + keyword)
+
+
+    with ot.JSONExporter(FILENAME) as exporter:
+
+        keys = ['Web_scraping', 'Python_(programming_language)', 'Data_science']
+
+        for key in keys:
+            p = MyPage(key)
+
+            exporter(p)
+
+
+    # read the file content
+    print(open(FILENAME, 'r').read())
+
+.. testoutput::
+    :options: +NORMALIZE_WHITESPACE
+
+    {"title": "Web scraping - Wikipedia", "first_word": "Web"}
+    {"title": "Python (programming language) - Wikipedia", "first_word": "Python"}
+    {"title": "Data science - Wikipedia", "first_word": "Data"}
+
+.. testcleanup::
+
+    file.close()
+
+
+For the full list of exporters, please see this reference: :ref:`Exporter Classes and Functions`
+
+
+Scrape Faster with Parallel Processing
+========================================
 

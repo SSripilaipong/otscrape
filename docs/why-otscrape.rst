@@ -2,14 +2,17 @@
 Why one-two-scrape?
 ====================
 
-1. Well-designed for readability, maintainability, and reusability.
-----------------------------------------------------------------------
+Well-designed for readability, maintainability, and reusability.
+======================================================================
 
-2. Prototype faster with pre-built scraping tools.
------------------------------------------------------
+Prototype faster with pre-built scraping tools.
+====================================================
 
-3. Scrape faster with parallelization tools.
---------------------------------------------
+Scrape faster with parallelization tools.
+============================================
 
-4. Failure recovery and Error handlers.
------------------------------------------
+Compatible with popular data science platform, eg. IPython, Jupyter Notebook, Google Colab.
+======================================================================================================
+
+Failure recovery and Error handlers.
+========================================

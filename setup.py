@@ -13,7 +13,7 @@ except(IOError, ImportError):
 
 
 NAME = 'one-two-scrape'
-VERSION = '0.0.3'
+VERSION = '0.0.4'
 URL = 'https://github.com/SSripilaipong/otscrape'
 LICENSE = 'MIT'
 AUTHOR = 'SSripilaipong'
