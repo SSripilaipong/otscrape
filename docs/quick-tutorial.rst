@@ -73,8 +73,17 @@ Please see :ref:`Page types and Loaders` for more information on other possible 
 Where `ot.XPath` and `RequestStatusCode` are the extractors,
 extracting the result from `SimpleRequestLoader` which is implicitly defined by `ot.Page`.
 
-When the `get_data` method is called, `MyPage` will load the raw data using its Loader.
-And all *projectable* attributes will be computed using the defined Extractors.
+When the `get_data()` method is called, `MyPage` will load the raw data using its Loader.
+And all *projectable* attributes will be computed using the defined Extractors which, then, are aggregated into a dictionary.
+
+**For better performance, loaders are designed not to load the raw data until it's needed,**
+**eg. get_data() is called or a user tries to access an attribute which has to take raw data as an input.**
+
+**As well as all the extractors, they will not be executed until it's needed.**
+
+**Once an attribute is computed, it will be stored in the page,**
+**and will be returned every time it's accessed instead of recomputing the value.**
+
 
 **[Example] Passing parameters to Loader:**
 
@@ -141,3 +150,106 @@ An `Extractor` are used for extracting information from raw data loaded in the `
 Commonly used extraction logics are provided such as XPath(), SoupSelect(), JSON(), or RegEx(), see the full list :ref:`Extractor Classes and Functions`
 
 One can also implement a custom Extractor class by inheriting from class `Extractor`. See this note for more information: :ref:`Implementing a custom Extractor`
+
+When an extractor is defined within a page class, an attribute with the same name will represent the value from the extractor.
+
+**[Example] Access an attribute value**
+
+.. testcode::
+
+    import otscrape as ot
+
+
+    class MyPage(ot.Page):
+        title  = ot.XPath('//title/text()', only_first=True)
+
+
+    p = MyPage('https://en.wikipedia.org/wiki/Web_scraping')
+
+    print(p['title'])  # The loader will load raw data from the url here. Then XPath() extractor processes it.
+
+.. testoutput::
+
+    Web scraping - Wikipedia
+
+
+An extractor can, also, take in a result from another extractor by specifying `target` parameter, which is, by default, set to `target='raw'`.
+
+
+**[Example] An extractor processes result from another extractor**
+
+.. testcode::
+
+    import otscrape as ot
+
+
+    class MyPage(ot.Page):
+        title  = ot.XPath('//title/text()', only_first=True)
+        first_word = ot.RegEx(r'(\w+)', only_first=True, select=0, target=title)
+
+
+    p = MyPage('https://en.wikipedia.org/wiki/Web_scraping')
+
+    print(p['title'])
+    print(p['first_word'])
+    print(p.get_data())
+
+.. testoutput::
+
+    Web scraping - Wikipedia
+    Web
+    {'title': 'Web scraping - Wikipedia', 'first_word': 'Web'}
+
+
+By default, when get_data() is called, all attributes are returned. Unless `project=False` is set at its extractor.
+However, its value's still accessible.
+
+
+**[Example] Non-projectable extractor**
+
+.. testcode::
+
+    import otscrape as ot
+
+
+    class MyPage(ot.Page):
+        title  = ot.XPath('//title/text()', only_first=True, project=False)
+        first_word = ot.RegEx(r'(\w+)', only_first=True, select=0, target=title)
+
+
+    p = MyPage('https://en.wikipedia.org/wiki/Web_scraping')
+
+    print(p.get_data())
+    print(p['title'])  # still accessible
+
+.. testoutput::
+
+    {'first_word': 'Web'}
+    Web scraping - Wikipedia
+
+
+When an error occurred with an extractor while processing data, the result, by default, will be replaced with `None`,
+and a warning message will be raised.
+The replace value can be set using parameter `replace_error`.
+
+
+**[Example] Replacing error in an extractor**
+
+.. testcode::
+
+    import otscrape as ot
+
+
+    class MyPage(ot.Page):
+        title  = ot.XPath('a wrong syntax', only_first=True,  # 'a wrong syntax' will cause an error
+                          replace_error='TITLE ERROR')
+
+
+    p = MyPage('https://en.wikipedia.org/wiki/Web_scraping')
+
+    print(p.get_data())
+
+.. testoutput::
+
+    {'title': 'TITLE ERROR'}
+

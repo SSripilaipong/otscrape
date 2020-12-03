@@ -8,6 +8,7 @@ Contents
 .. toctree::
     :maxdepth: 3
 
+    why-otscrape
     quick-tutorial
     useful-notes
     reference

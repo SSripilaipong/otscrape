@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from requests import Response
 import re
 
@@ -37,11 +38,13 @@ def get_flags(flags):
 
 
 class RegEx(Extractor):
-    def __init__(self, pattern, flags='', multiple=False, target=None, *, project=True, replace_error=None, **kwargs):
+    def __init__(self, pattern, flags='', only_first=False, select=None, target=None, *,
+                 project=True, replace_error=None, **kwargs):
         super().__init__(target=target, project=project, replace_error=replace_error)
 
         self.flags = get_flags(flags)
-        self.multiple = multiple
+        self.only_first = only_first
+        self.select = select
         self.pattern = re.compile(pattern, self.flags)
         self.kwargs = kwargs
 
@@ -60,9 +63,18 @@ class RegEx(Extractor):
 
         result = []
         for match in it:
-            result.append(match.groupdict())
+            group = match.groupdict()
+            group.update({i: v for i, v in enumerate(match.groups())})
 
-            if not self.multiple:
+            if self.select is not None:
+                if not isinstance(self.select, Iterable) or isinstance(self.select, str):
+                    group = group[self.select]
+                else:
+                    group = {s: group.get(s, None) for s in self.select}
+
+            result.append(group)
+
+            if self.only_first:
                 result = result[0]
                 break
 
