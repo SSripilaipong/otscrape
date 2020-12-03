@@ -1,6 +1,7 @@
 Reference
 ==========
 
+
 Page Classes and Functions
 ---------------------------------
 
@@ -10,112 +11,27 @@ Page Classes and Functions
    :undoc-members:
    :inherited-members:
 
-.. autoclass:: otscrape.core.page.page.Page
-
-.. autoclass:: otscrape.core.page.data.DataPage
-
-.. autoclass:: otscrape.FileLinePage
-   :members: iter_lines, apply, reset
-   :undoc-members:
-
-.. autoclass:: otscrape.JSONLinePage
-   :members: iter_lines, apply, reset
-   :undoc-members:
-
-.. autoclass:: otscrape.CSVLinePage
-   :members: iter_lines, apply, reset
+.. automodule:: otscrape.core.page
+   :members:
    :undoc-members:
 
 
 Extractor Classes and Functions
 --------------------------------------
 
-.. autoclass:: otscrape.Raw
+.. automodule:: otscrape.core.extractor
    :members:
-
-
-.. autoclass:: otscrape.RequestText
-   :members:
-
-
-.. autoclass:: otscrape.RequestStatusCode
-   :members:
-
-
-.. autoclass:: otscrape.JSON
-   :members:
-
-
-.. autoclass:: otscrape.DictPath
-   :members:
-
-
-.. autoclass:: otscrape.XPath
-   :members:
-
-
-.. autoclass:: otscrape.ZipDict
-   :members:
-
-
-.. autoclass:: otscrape.RegEx
-   :members:
-
-
-.. autoclass:: otscrape.Chain
-   :members:
-
-
-.. autoclass:: otscrape.ChainMap
-   :members:
-
-
-.. autoclass:: otscrape.Map
-   :members:
-
-
-.. autoclass:: otscrape.StarMap
-   :members:
-
-
-.. autoclass:: otscrape.Lambda
-   :members:
-
-
-.. autoclass:: otscrape.StarLambda
-   :members:
-
-
-.. autoclass:: otscrape.TextSoup
-   :members:
-
-
-.. autoclass:: otscrape.SoupFindAll
-   :members:
-
-
-.. autoclass:: otscrape.SoupSelect
-   :members:
-
-
-.. autoclass:: otscrape.FileContent
-   :members:
-
-
-.. autoclass:: otscrape.FileName
-   :members:
-
-
-.. autoclass:: otscrape.FileLineNumber
-   :members:
+   :undoc-members:
 
 
 .. autoclass:: otscrape.Extractor
    :members:
+   :undoc-members:
 
 
 .. autoclass:: otscrape.Attribute
    :members:
+   :undoc-members:
 
 
 .. autofunction:: otscrape.extractor

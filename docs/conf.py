@@ -42,6 +42,7 @@ extensions = [
 ]
 
 autosummary_generate = True
+add_module_names = False
 
 source_suffix = ['.rst', '.md']
 
