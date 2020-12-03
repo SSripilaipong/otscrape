@@ -6,7 +6,7 @@ Page Classes and Functions
 ---------------------------------
 
 .. autoclass:: otscrape.core.base.page.PageBase
-   :special-members: __getitem__, __setitem__
+   :special-members: __getitem__, __setitem__, on_error
    :members:
    :undoc-members:
    :inherited-members:
@@ -19,15 +19,13 @@ Page Classes and Functions
 Extractor Classes and Functions
 --------------------------------------
 
-.. automodule:: otscrape.core.extractor
-   :members:
-   :undoc-members:
-
-
 .. autoclass:: otscrape.Extractor
    :members:
    :undoc-members:
 
+.. automodule:: otscrape.core.extractor
+   :members:
+   :undoc-members:
 
 .. autoclass:: otscrape.Attribute
    :members:
@@ -40,6 +38,11 @@ Extractor Classes and Functions
 Exporter Classes and Functions
 -------------------------------------
 
+.. autoclass:: otscrape.core.base.exporter.Exporter
+   :members: on_error
+   :inherited-members:
+   :undoc-members:
+
 .. autoclass:: otscrape.JSONExporter
    :members:
    :undoc-members:
@@ -48,23 +51,11 @@ Exporter Classes and Functions
 Loader Classes and Functions
 -----------------------------------
 
-.. autoclass:: otscrape.SimpleRequestLoader
+.. autoclass:: otscrape.core.base.loader.Loader
    :members:
    :undoc-members:
 
-.. autoclass:: otscrape.DummyLoader
-   :members:
-   :undoc-members:
-
-.. autoclass:: otscrape.LineLoader
-   :members:
-   :undoc-members:
-
-.. autoclass:: otscrape.JSONFileLoader
-   :members:
-   :undoc-members:
-
-.. autoclass:: otscrape.CSVFileLoader
+.. automodule:: otscrape.core.loader
    :members:
    :undoc-members:
 

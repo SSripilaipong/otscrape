@@ -6,11 +6,13 @@ from otscrape.core.extractor import (Raw, RequestText, RequestStatusCode, JSON, 
                                      TextSoup, SoupFindAll, SoupSelect,
                                      FileContent, FileName, FileLineNumber)
 
+from otscrape.core.base.loader import Loader
 from otscrape.core.loader import SimpleRequestLoader, DummyLoader, LineLoader, JSONFileLoader, CSVFileLoader
 
 from otscrape.core.base.page import PageBase
 from otscrape.core.page import Page, DataPage, FileLinePage, JSONLinePage, CSVLinePage
 
+from otscrape.core.base.exporter import Exporter
 from otscrape.core.exporter import JSONExporter
 
 from otscrape.core.worker import Workers
