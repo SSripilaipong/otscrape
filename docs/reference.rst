@@ -4,13 +4,15 @@ Reference
 Page Classes and Functions
 ---------------------------------
 
-.. autoclass:: otscrape.Page
+.. autoclass:: otscrape.core.base.page.PageBase
    :special-members: __getitem__, __setitem__
    :members:
    :undoc-members:
    :inherited-members:
 
-.. autoclass:: otscrape.DataPage
+.. autoclass:: otscrape.core.page.page.Page
+
+.. autoclass:: otscrape.core.page.data.DataPage
 
 .. autoclass:: otscrape.FileLinePage
    :members: iter_lines, apply, reset
